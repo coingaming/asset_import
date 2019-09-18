@@ -18,7 +18,7 @@ defmodule AutoAssetsTest do
 
     assert MapSet.new(["hello", "world"]) == AutoAssets.imports()
 
-    assert MapSet.new(["hello", "world", "from", "sub"]) ==
+    assert MapSet.new(["hello", "world", "from", "sub", "and", "some"]) ==
              AutoAssets.get_asset_imports(__MODULE__)
   end
 end

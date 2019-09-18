@@ -1,0 +1,29 @@
+{
+   "scripts": {
+     "deploy": "webpack --mode production",
+     "watch": "webpack --mode production --watch"
+   },
+   "dependencies": {
+     "phoenix": "file:../deps/phoenix",
+     "phoenix_html": "file:../deps/phoenix_html",
+     "phoenix_live_view": "file:../deps/phoenix_live_view"
+   },
+   "devDependencies": {
+     "@babel/core": "^7.0.0",
+     "@babel/preset-env": "^7.0.0",
+     "babel-loader": "^8.0.0",
+     "copy-webpack-plugin": "^4.5.0",
+     "css-loader": "^0.28.10",
+     "file-loader": "^2.0.0",
+     "mini-css-extract-plugin": "^0.4.0",
+     "node-sass": "^4.9.3",
+     "optimize-css-assets-webpack-plugin": "^4.0.0",
+     "sass-loader": "^7.1.0",
+     "uglifyjs-webpack-plugin": "^1.2.4",
+     "url-loader": "^1.1.1",
+     "webpack": "4.20.2",
+     "webpack-cli": "^3.1.2",
+     "webpack-manifest-plugin": "^2.0.4"
+   }
+ }
+ 

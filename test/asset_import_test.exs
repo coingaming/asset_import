@@ -18,7 +18,7 @@ defmodule AssetImportTest do
 
     assert MapSet.new(["hello", "world"]) == AssetImport.imports()
 
-    assert MapSet.new(["hello", "world", "from", "sub", "and", "some"]) ==
-             AssetImport.get_asset_imports(__MODULE__)
+    assert MapSet.new(["hello", "world", "from", "sub", "and", "some", "other", "module"]) ==
+             AssetImport.get_asset_imports()
   end
 end

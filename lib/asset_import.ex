@@ -12,6 +12,10 @@ defmodule AssetImport do
         end
       end
       defmacro asset_import(name) do
+
+        IO.inspect(File.cwd!())
+
+
         AssetImport.put_compiling_module(__CALLER__.module)
 
         current_asset_imports = Module.get_attribute(__CALLER__.module, :asset_imports) || MapSet.new()
@@ -42,15 +46,29 @@ defmodule AssetImport do
     Process.get(:asset_imports)
   end
 
-  def get_asset_imports(caller_module) do
-    get_modules(caller_module)
+  def hash(value) do
+    :crypto.hash(:sha256, value)
+    |> Base.encode64(padding: false)
+    |> String.slice(0..7)
+  end
+
+  def get_scripts() do
+
+  end
+
+  def get_styles() do
+
+  end
+
+  def get_asset_imports() do
+    get_modules()
     |> Enum.reduce(MapSet.new(), &MapSet.union(&2, &1.__asset_imports__()))
   end
 
-  def get_modules(caller_module) do
+  def get_modules() do
     compiling_modules = get_compiling_modules()
 
-    fetch_compiled_modules(caller_module)
+    fetch_compiled_modules()
     |> Enum.filter(&function_exported(&1, :__asset_imports__, 0))
     |> MapSet.new()
     |> MapSet.union(compiling_modules)
@@ -77,14 +95,7 @@ defmodule AssetImport do
     |> String.to_atom()
   end
 
-  defp fetch_compiled_modules(module) do
-    root_module =
-      module
-      |> Module.split()
-      |> Enum.slice(0..0)
-      |> Module.concat()
-      |> Atom.to_string()
-
+  defp fetch_compiled_modules() do
     :code.get_path()
     |> Enum.flat_map(fn dir ->
       dir
@@ -93,7 +104,7 @@ defmodule AssetImport do
         true ->
           dir
           |> File.ls!()
-          |> Stream.filter(&(String.starts_with?(&1, root_module) && String.ends_with?(&1, ".beam")))
+          |> Stream.filter(&(String.starts_with?(&1, "Elixir.") && String.ends_with?(&1, ".beam")))
           |> Enum.map(&(Regex.replace(~r/(\.beam)$/, &1, fn _, _ -> "" end) |> String.to_atom()))
 
         false ->

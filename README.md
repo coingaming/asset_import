@@ -1,4 +1,4 @@
-# AutoAssets
+# AssetImport
 
 **TODO: Add description**
 
@@ -10,7 +10,7 @@ by adding `auto_assets` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:auto_assets, "~> 0.1.0"}
+    {:asset_import, "~> 0.1.0"}
   ]
 end
 ```

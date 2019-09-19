@@ -1,4 +1,4 @@
-defmodule AutoAssets do
+defmodule AssetImport do
 
   defmacro __using__(_opts) do
     # assets_path = Keyword.get(opts, :assets_path, "assets/")
@@ -8,18 +8,18 @@ defmodule AutoAssets do
       defmacro __using__(_) do
         quote location: :keep do
           import unquote(__MODULE__)
-          @before_compile AutoAssets
+          @before_compile AssetImport
         end
       end
-      defmacro import_assets(name) do
-        AutoAssets.put_compiling_module(__CALLER__.module)
+      defmacro asset_import(name) do
+        AssetImport.put_compiling_module(__CALLER__.module)
 
         current_asset_imports = Module.get_attribute(__CALLER__.module, :asset_imports) || MapSet.new()
         new_asset_imports = MapSet.put(current_asset_imports, name)
         Module.put_attribute(__CALLER__.module, :asset_imports, new_asset_imports)
 
         quote location: :keep do
-          AutoAssets.register_import(unquote(name))
+          AssetImport.register_import(unquote(name))
         end
       end
     end
@@ -34,12 +34,12 @@ defmodule AutoAssets do
   end
 
   def register_import(name) do
-    current_imports = Process.get(:auto_assets_imports, MapSet.new())
-    Process.put(:auto_assets_imports, MapSet.put(current_imports, name))
+    current_imports = Process.get(:asset_imports, MapSet.new())
+    Process.put(:asset_imports, MapSet.put(current_imports, name))
   end
 
   def imports do
-    Process.get(:auto_assets_imports)
+    Process.get(:asset_imports)
   end
 
   def get_asset_imports(caller_module) do
@@ -73,7 +73,7 @@ defmodule AutoAssets do
   end
 
   defp compiling_modules_agent_name() do
-    (Atom.to_string(Mix.Project.config()[:app]) <> "_auto_assets")
+    (Atom.to_string(Mix.Project.config()[:app]) <> "_asset_imports")
     |> String.to_atom()
   end
 

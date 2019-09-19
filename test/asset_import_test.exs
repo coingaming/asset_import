@@ -30,7 +30,12 @@ defmodule AssetImportTest do
     assert assets ==
              names
              |> Enum.reduce(MapSet.new(), fn el, acc ->
-               file = cwd |> Path.join("assets") |> Path.join(el)
+               file =
+                 Path.join(".", cwd
+                 |> Path.join("assets")
+                 |> Path.join(el)
+                 |> Path.relative_to(Application.get_env(:asset_import, :assets_path)))
+
                MapSet.put(acc, hash(file))
              end)
   end
@@ -41,7 +46,12 @@ defmodule AssetImportTest do
     assert assets ==
              names
              |> Enum.reduce(%{}, fn el, acc ->
-               file = cwd |> Path.join("assets") |> Path.join(el)
+              file =
+                Path.join(".", cwd
+                |> Path.join("assets")
+                |> Path.join(el)
+                |> Path.relative_to(Application.get_env(:asset_import, :assets_path)))
+
                Map.put(acc, hash(file), file)
              end)
   end

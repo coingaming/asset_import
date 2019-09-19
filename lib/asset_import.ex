@@ -54,13 +54,19 @@ defmodule AssetImport do
       end
     end
 
-    asset_hash = hash(asset_file)
+    relative_asset_file =
+      Path.join(
+        ".",
+        Path.relative_to(asset_file, Application.get_env(:asset_import, :assets_path))
+      )
+
+    asset_hash = hash(relative_asset_file)
 
     put_compiling_module(module)
 
     current_asset_imports = Module.get_attribute(module, :asset_imports) || Map.new()
 
-    new_imports = Map.put(current_asset_imports, asset_hash, asset_file)
+    new_imports = Map.put(current_asset_imports, asset_hash, relative_asset_file)
     Module.put_attribute(module, :asset_imports, new_imports)
 
     asset_hash

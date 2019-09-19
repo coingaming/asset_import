@@ -20,7 +20,9 @@ defmodule AssetImport.EndpointsWriter do
 
   def do_write do
     content = Jason.encode!(AssetImport.get_asset_imports(), pretty: true)
-    entrypoints_file = Application.get_env(:asset_import, :entrypoints_file)
+
+    entrypoints_file =
+      Application.get_env(:asset_import, :assets_path) |> Path.join("entrypoints.json")
 
     case File.read(entrypoints_file) do
       {:ok, ^content} ->
@@ -30,5 +32,4 @@ defmodule AssetImport.EndpointsWriter do
         :ok = File.write(entrypoints_file, content)
     end
   end
-
 end

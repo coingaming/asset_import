@@ -1,9 +1,9 @@
-defmodule AutoAssets.MixProject do
+defmodule AssetImport.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :auto_assets,
+      app: :asset_import,
       version: "0.1.0",
       elixir: "~> 1.9",
       elixirc_paths: elixirc_paths(Mix.env()),

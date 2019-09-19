@@ -23,3 +23,7 @@ erl_crash.dump
 auto_assets-*.tar
 
 /.elixir_ls
+
+/priv/static
+
+/assets/node_modules

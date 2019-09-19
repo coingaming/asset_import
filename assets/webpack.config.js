@@ -4,7 +4,8 @@ const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const ManifestPlugin = require('webpack-manifest-plugin');
-const entryPoints = require('./entryPoints.json');
+const entryPoints = require('./entrypoints.json');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
 module.exports = (env, options) => ({
   optimization: {
@@ -12,8 +13,12 @@ module.exports = (env, options) => ({
       new UglifyJsPlugin({ cache: true, parallel: true, sourceMap: false }),
       new OptimizeCSSAssetsPlugin({})
     ],
+    runtimeChunk: 'single',
+    concatenateModules: true,
     splitChunks: {
-      chunks: 'all'
+      chunks: 'all',
+      minChunks: 1,
+      minSize: 0
     }
   },
   entry: entryPoints,
@@ -64,6 +69,7 @@ module.exports = (env, options) => ({
       chunkFilename: options.mode === 'production' ? '[id]-[contenthash].css' : '[id].css',
     }),
     new CopyWebpackPlugin([{ from: 'static/', to: './' }]),
-    new ManifestPlugin({ fileName: '../manifest.json' })
+    new ManifestPlugin({ fileName: '../manifest.json' }),
+    new CleanWebpackPlugin(),
   ]
 });

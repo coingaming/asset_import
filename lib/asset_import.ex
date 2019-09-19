@@ -1,34 +1,28 @@
 defmodule AssetImport do
+  defmacro __using__(opts) do
+    assets_path = Keyword.get(opts, :assets_path, "assets/")
+    _manifest_file = Keyword.get(opts, :manifest_file, "priv/manifest.json")
 
-  defmacro __using__(_opts) do
-    # assets_path = Keyword.get(opts, :assets_path, "assets/")
-    # manifest_file = Keyword.get(opts, :manifest_file , "priv/manifest.json")
-
-    quote location: :keep do
+    quote do
       defmacro __using__(_) do
-        quote location: :keep do
+        quote do
           import unquote(__MODULE__)
           @before_compile AssetImport
+          @after_compile AssetImport
         end
       end
+
       defmacro asset_import(name) do
+        asset_hash = AssetImport.register_import(__CALLER__.module, unquote(assets_path), name)
 
-        IO.inspect(File.cwd!())
-
-
-        AssetImport.put_compiling_module(__CALLER__.module)
-
-        current_asset_imports = Module.get_attribute(__CALLER__.module, :asset_imports) || MapSet.new()
-        new_asset_imports = MapSet.put(current_asset_imports, name)
-        Module.put_attribute(__CALLER__.module, :asset_imports, new_asset_imports)
-
-        quote location: :keep do
-          AssetImport.register_import(unquote(name))
+        quote do
+          AssetImport.asset_import(unquote(asset_hash))
         end
       end
     end
   end
 
+  @doc false
   defmacro __before_compile__(_env) do
     quote do
       def __asset_imports__ do
@@ -37,35 +31,73 @@ defmodule AssetImport do
     end
   end
 
-  def register_import(name) do
-    current_imports = Process.get(:asset_imports, MapSet.new())
-    Process.put(:asset_imports, MapSet.put(current_imports, name))
+  @doc false
+  def __after_compile__(_env, _bytecode) do
+    AssetImport.EndpointsWriter.write(self())
   end
 
+  @doc false
+  def register_import(module, assets_path, name) do
+    asset_file =
+      File.cwd!()
+      |> Path.join(assets_path)
+      |> Path.join(name)
+
+    unless File.exists?(asset_file) || File.exists?(asset_file <> ".js") do
+      if Path.extname(asset_file) == ".js" do
+        raise "Asset #{asset_file} not found."
+      else
+        raise """
+        Asset #{asset_file} not found.
+        Either a file #{name}.js or #{name}/index.js should exist."
+        """
+      end
+    end
+
+    asset_hash = hash(asset_file)
+
+    put_compiling_module(module)
+
+    current_asset_imports = Module.get_attribute(module, :asset_imports) || Map.new()
+
+    new_imports = Map.put(current_asset_imports, asset_hash, asset_file)
+    Module.put_attribute(module, :asset_imports, new_imports)
+
+    asset_hash
+  end
+
+  @doc false
+  def asset_import(asset_hash) do
+    current_imports = Process.get(:asset_imports, MapSet.new())
+    Process.put(:asset_imports, MapSet.put(current_imports, asset_hash))
+  end
+
+  @doc false
   def imports do
     Process.get(:asset_imports)
   end
 
-  def hash(value) do
-    :crypto.hash(:sha256, value)
-    |> Base.encode64(padding: false)
-    |> String.slice(0..7)
-  end
-
   def get_scripts() do
-
   end
 
   def get_styles() do
-
   end
 
+  @doc false
   def get_asset_imports() do
     get_modules()
-    |> Enum.reduce(MapSet.new(), &MapSet.union(&2, &1.__asset_imports__()))
+    |> Enum.reduce(Map.new(), &Map.merge(&2, &1.__asset_imports__()))
   end
 
-  def get_modules() do
+  @doc false
+  defp hash(value) do
+    :crypto.hash(:sha256, value)
+    |> Base.encode64(padding: false)
+    |> String.replace(~r/[^a-zA-Z0-9]+/, "")
+    |> String.slice(0..7)
+  end
+
+  defp get_modules() do
     compiling_modules = get_compiling_modules()
 
     fetch_compiled_modules()
@@ -74,7 +106,7 @@ defmodule AssetImport do
     |> MapSet.union(compiling_modules)
   end
 
-  def put_compiling_module(module) do
+  defp put_compiling_module(module) do
     name = compiling_modules_agent_name()
     Agent.start(fn -> MapSet.new() end, name: name)
     Agent.update(name, &MapSet.put(&1, module))
@@ -104,7 +136,9 @@ defmodule AssetImport do
         true ->
           dir
           |> File.ls!()
-          |> Stream.filter(&(String.starts_with?(&1, "Elixir.") && String.ends_with?(&1, ".beam")))
+          |> Stream.filter(
+            &(String.starts_with?(&1, "Elixir.") && String.ends_with?(&1, ".beam"))
+          )
           |> Enum.map(&(Regex.replace(~r/(\.beam)$/, &1, fn _, _ -> "" end) |> String.to_atom()))
 
         false ->

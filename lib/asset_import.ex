@@ -100,35 +100,37 @@ defmodule AssetImport do
 
   @doc false
   def register_import(module, assets_path, name) do
-    asset_file =
+    abs_path =
       File.cwd!()
       |> Path.join(assets_path)
       |> Path.join(name)
 
-    unless File.exists?(asset_file) || File.exists?(asset_file <> ".js") do
-      if Path.extname(asset_file) == ".js" do
-        raise "Asset #{asset_file} not found."
+    unless File.exists?(abs_path) || File.exists?(abs_path <> ".js") do
+      if Path.extname(abs_path) == ".js" do
+        raise "Asset #{abs_path} not found."
       else
         raise """
-        Asset #{asset_file} not found.
+        Asset #{abs_path} not found.
         Either a file #{name}.js or #{name}/index.js should exist."
         """
       end
     end
 
-    relative_file = Path.relative_to(asset_file, Application.get_env(:asset_import, :assets_path))
+    rel_path =
+      abs_path
+      |> Path.relative_to(Application.get_env(:asset_import, :assets_path))
+      |> case do
+        file = "/" <> _ ->
+          file
 
-    relative_file =
-      if String.starts_with?(relative_file, "/") do
-        asset_file
-      else
-        Path.join(".", relative_file)
+        file ->
+          Path.join(".", file)
       end
 
     put_compiling_module(module)
     current_asset_imports = Module.get_attribute(module, :asset_imports) || Map.new()
-    asset_hash = hash(relative_file)
-    new_imports = Map.put(current_asset_imports, asset_hash, relative_file)
+    asset_hash = hash(rel_path)
+    new_imports = Map.put(current_asset_imports, asset_hash, rel_path)
     Module.put_attribute(module, :asset_imports, new_imports)
     asset_hash
   end

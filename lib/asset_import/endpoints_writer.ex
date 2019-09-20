@@ -1,4 +1,8 @@
 defmodule AssetImport.EndpointsWriter do
+  @moduledoc """
+  This server is required to make the write at the end of the compile process.
+  It monitors a compiler process and performs write (and stops itself) when compiler process exits.
+  """
   use GenServer
 
   def write(pid) do
@@ -15,21 +19,19 @@ defmodule AssetImport.EndpointsWriter do
 
   def handle_info({:DOWN, _, :process, _, _}, state) do
     do_write()
-    {:noreply, state}
+    {:stop, :normal, state}
   end
 
-  def do_write do
+  defp do_write do
     content = Jason.encode!(AssetImport.get_asset_imports(), pretty: true)
+    file_path = Application.get_env(:asset_import, :assets_path) |> Path.join("entrypoints.json")
 
-    entrypoints_file =
-      Application.get_env(:asset_import, :assets_path) |> Path.join("entrypoints.json")
-
-    case File.read(entrypoints_file) do
+    case File.read(file_path) do
       {:ok, ^content} ->
         :ok
 
       _ ->
-        :ok = File.write(entrypoints_file, content)
+        :ok = File.write(file_path, content)
     end
   end
 end

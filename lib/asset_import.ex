@@ -1,4 +1,6 @@
 defmodule AssetImport do
+  alias AssetImport.EndpointsWriter
+
   defmacro __using__(opts) do
     assets_path = Keyword.get(opts, :assets_path, "assets/")
     manifest_file = Keyword.get(opts, :manifest_file, "priv/manifest.json")
@@ -95,7 +97,7 @@ defmodule AssetImport do
 
   @doc false
   def __after_compile__(_env, _bytecode) do
-    AssetImport.EndpointsWriter.write(self())
+    EndpointsWriter.write(self())
   end
 
   @doc false
@@ -242,13 +244,14 @@ defmodule AssetImport do
     :erlang.function_exported(module, function, arity)
   end
 
+  @doc false
   def manifest_hash(manifest_file) do
     manifest_file
     |> read_manifest()
     |> :erlang.md5()
   end
 
-  def read_manifest(manifest_file) do
+  defp read_manifest(manifest_file) do
     manifest_file
     |> File.read()
     |> case do
@@ -261,9 +264,10 @@ defmodule AssetImport do
     end
   end
 
+  @doc false
   def manifest_assets(manifest_file, extension) do
     manifest_file
-    |> AssetImport.read_manifest()
+    |> read_manifest()
     |> Jason.decode!()
     |> Enum.filter(fn {_, file} ->
       Path.extname(file) == extension

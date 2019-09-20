@@ -5,7 +5,6 @@ defmodule AssetImport do
     assets_path = Keyword.get(opts, :assets_path, "assets")
 
     quote do
-
       defmodule Assets do
         defmacro scripts() do
           manifest =
@@ -45,7 +44,10 @@ defmodule AssetImport do
 
         quote do
           import unquote(__MODULE__)
-          import unquote(__MODULE__).Assets, only: [scripts: 0, styles: 0, render_scripts: 0, render_styles: 0]
+
+          import unquote(__MODULE__).Assets,
+            only: [scripts: 0, styles: 0, render_scripts: 0, render_styles: 0]
+
           @before_compile AssetImport
           @after_compile AssetImport
         end
@@ -172,8 +174,8 @@ defmodule AssetImport do
   def get_modules() do
     compiling_modules = get_compiling_modules()
 
-    fetch_compiled_modules()
-    |> Enum.filter(&function_exported(&1, :__asset_imports__, 0))
+    get_compiled_modules()
+    |> Stream.filter(&(Code.ensure_loaded?(&1) and function_exported?(&1, :__asset_imports__?, 0)))
     |> MapSet.new()
     |> MapSet.union(compiling_modules)
   end
@@ -199,36 +201,18 @@ defmodule AssetImport do
     |> String.to_atom()
   end
 
-  defp fetch_compiled_modules() do
-    :code.get_path()
-    |> Enum.flat_map(fn dir ->
-      dir
-      |> File.dir?()
-      |> case do
-        true ->
-          dir
-          |> File.ls!()
-          |> Enum.filter(
-            &(String.starts_with?(&1, "Elixir") && String.ends_with?(&1, ".beam"))
-          )
-          |> Enum.map(&(Regex.replace(~r/(\.beam)$/, &1, fn _, _ -> "" end) |> String.to_atom()))
-
-        false ->
-          []
-      end
-    end)
-    |> MapSet.new()
+  @doc """
+  Returns all compiled modules in a project.
+  """
+  def get_compiled_modules do
+    Mix.Project.compile_path()
+    |> Path.join("*.beam")
+    |> Path.wildcard()
+    |> Enum.map(&beam_to_module/1)
   end
 
-  defp function_exported(module, function, arity) do
-    try do
-      module.__info__(:functions)
-    rescue
-      _ -> :ok
-    end
-
-    _ = Code.ensure_loaded(module)
-    :erlang.function_exported(module, function, arity)
+  defp beam_to_module(path) do
+    path |> Path.basename(".beam") |> String.to_atom()
   end
 
   @doc false

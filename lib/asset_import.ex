@@ -1,10 +1,12 @@
 defmodule AssetImport do
   defmacro __using__(opts) do
     assets_path = Keyword.get(opts, :assets_path, "assets/")
-    _manifest_file = Keyword.get(opts, :manifest_file, "priv/manifest.json")
+    manifest_file = Keyword.get(opts, :manifest_file, "priv/manifest.json")
 
     quote do
       defmacro __using__(_) do
+        Module.put_attribute(__CALLER__.module, :asset_imports, Map.new())
+
         quote do
           import unquote(__MODULE__)
           @before_compile AssetImport
@@ -18,6 +20,36 @@ defmodule AssetImport do
         quote do
           AssetImport.asset_import(unquote(asset_hash))
         end
+      end
+
+      defmacro scripts() do
+        manifest =
+          unquote(manifest_file)
+          |> AssetImport.manifest_assets(".js")
+          |> Macro.escape()
+
+        quote do
+          AssetImport.imports(unquote(manifest))
+        end
+      end
+
+      defmacro styles() do
+        manifest =
+          unquote(manifest_file)
+          |> AssetImport.manifest_assets(".css")
+          |> Macro.escape()
+
+        quote do
+          AssetImport.imports(unquote(manifest))
+        end
+      end
+
+      def render_scripts do
+        AssetImport.render_scripts(scripts())
+      end
+
+      def render_styles do
+        AssetImport.render_styles(styles())
       end
     end
   end
@@ -54,21 +86,20 @@ defmodule AssetImport do
       end
     end
 
-    relative_asset_file =
-      Path.join(
-        ".",
-        Path.relative_to(asset_file, Application.get_env(:asset_import, :assets_path))
-      )
+    relative_file = Path.relative_to(asset_file, Application.get_env(:asset_import, :assets_path))
 
-    asset_hash = hash(relative_asset_file)
+    relative_file =
+      if String.starts_with?(relative_file, "/") do
+        asset_file
+      else
+        Path.join(".", relative_file)
+      end
 
     put_compiling_module(module)
-
     current_asset_imports = Module.get_attribute(module, :asset_imports) || Map.new()
-
-    new_imports = Map.put(current_asset_imports, asset_hash, relative_asset_file)
+    asset_hash = hash(relative_file)
+    new_imports = Map.put(current_asset_imports, asset_hash, relative_file)
     Module.put_attribute(module, :asset_imports, new_imports)
-
     asset_hash
   end
 
@@ -78,15 +109,29 @@ defmodule AssetImport do
     Process.put(:asset_imports, MapSet.put(current_imports, asset_hash))
   end
 
-  @doc false
-  def imports do
+  def render_scripts(assets) do
+    assets
+    |> Enum.map(&"<script type=\"application/javascript\" src=\"#{&1}\"></script>")
+    |> Enum.join("\n")
+  end
+
+  def render_styles(assets) do
+    assets
+    |> Enum.map(&"<link rel=\"stylesheet\" type=\"text/css\" href=\"#{&1}\">")
+    |> Enum.join("\n")
+  end
+
+  def current_imports do
     Process.get(:asset_imports)
   end
 
-  def get_scripts() do
-  end
-
-  def get_styles() do
+  @doc false
+  def imports(manifest) do
+    current_imports()
+    |> MapSet.put("runtime")
+    |> Enum.reduce([], &(&2 ++ Map.get(manifest, &1, [])))
+    |> Enum.map(fn {_, file} -> file end)
+    |> Enum.sort()
   end
 
   @doc false
@@ -165,29 +210,48 @@ defmodule AssetImport do
     :erlang.function_exported(module, function, arity)
   end
 
-  # defp read_manifest(manifest_file) do
-  #   manifest_file
-  #   |> File.read()
-  #   |> case do
-  #     {:ok, body} ->
-  #       body
+  def read_manifest(manifest_file) do
+    manifest_file
+    |> File.read()
+    |> case do
+      {:ok, body} ->
+        body
 
-  #     {:error, _} ->
-  #       IO.warn("Asset manifest file (#{manifest_file}) not found. Build assets first.")
-  #       "{}"
-  #   end
-  # end
+      {:error, _} ->
+        IO.warn("Asset manifest file (#{manifest_file}) not found. Build assets first.")
+        "{}"
+    end
+  end
 
-  # defp manifest_assets(manifest, extension, asset_name) do
-  #   manifest
-  #   |> Enum.filter(fn {name, file} ->
-  #     Path.extname(file) == extension &&
-  #       (String.contains?(name, "~#{asset_name}~") ||
-  #          String.contains?(name, "~#{asset_name}.") ||
-  #          String.starts_with?(name, "#{asset_name}~") ||
-  #          String.starts_with?(name, "#{asset_name}."))
-  #   end)
-  #   |> Enum.map(fn {_, file} -> file end)
-  #   |> Enum.sort()
-  # end
+  def manifest_assets(manifest_file, extension) do
+    manifest_file
+    |> AssetImport.read_manifest()
+    |> Jason.decode!()
+    |> Enum.filter(fn {_, file} ->
+      Path.extname(file) == extension
+    end)
+    |> Enum.reduce(Map.new(), fn {key, file}, acc ->
+      String.split(Path.basename(key, extension), "~")
+      |> Enum.reduce(acc, fn name, acc ->
+        [order_str | _] = String.split(file, "-")
+        {order, ""} = Integer.parse(order_str)
+        Map.put(acc, name, [{order, file} | Map.get(acc, name, [])])
+      end)
+    end)
+
+    # |> Enum.sort()
+  end
+
+  def manifest_assets(manifest, asset_name, extension) do
+    manifest
+    |> Enum.filter(fn {name, file} ->
+      Path.extname(file) == extension &&
+        (String.contains?(name, "~#{asset_name}~") ||
+           String.contains?(name, "~#{asset_name}.") ||
+           String.starts_with?(name, "#{asset_name}~") ||
+           String.starts_with?(name, "#{asset_name}."))
+    end)
+    |> Enum.map(fn {_, file} -> file end)
+    |> Enum.sort()
+  end
 end

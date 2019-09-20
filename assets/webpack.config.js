@@ -4,7 +4,6 @@ const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const ManifestPlugin = require('webpack-manifest-plugin');
-const entryPoints = require('./entrypoints.json');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
 module.exports = (env, options) => ({
@@ -21,7 +20,7 @@ module.exports = (env, options) => ({
       minSize: 0
     }
   },
-  entry: entryPoints,
+  entry: require('./entrypoints.json'),
   output: {
     filename: options.mode === 'production' ? '[id]-[contenthash].js' : '[id].js',
     chunkFilename: options.mode === 'production' ? '[id]-[contenthash].js' : '[id].js',

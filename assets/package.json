@@ -1,7 +1,7 @@
 {
   "scripts": {
     "deploy": "webpack --mode production",
-    "watch": "nodemon --watch entrypoints.json --exec \"webpack --mode production --watch\""
+    "watch": "nodemon"
   },
   "dependencies": {},
   "devDependencies": {

@@ -16,7 +16,7 @@ defmodule AssetImportTest do
     asset_import("hello")
     asset_import("world")
 
-    assert_asset_imports(["hello", "world"], AssetImport.imports())
+    assert_asset_imports(["hello", "world"], AssetImport.current_imports())
 
     assert_registered_imports(
       ["hello", "world", "from", "sub", "and", "some", "other", "module"],
@@ -24,36 +24,45 @@ defmodule AssetImportTest do
     )
   end
 
+  test "scripts/0" do
+    asset_import("hello")
+    asset_import("world")
+
+    assert_asset_imports(["hello", "world"], AssetImport.current_imports())
+
+    assert is_list(scripts())
+    assert is_list(styles())
+
+    assert is_binary(render_scripts())
+    assert is_binary(render_styles())
+  end
+
   defp assert_asset_imports(names, assets) do
-    cwd = File.cwd!()
-
-    assert assets ==
-             names
-             |> Enum.reduce(MapSet.new(), fn el, acc ->
-               file =
-                 Path.join(".", cwd
-                 |> Path.join("assets")
-                 |> Path.join(el)
-                 |> Path.relative_to(Application.get_env(:asset_import, :assets_path)))
-
-               MapSet.put(acc, hash(file))
-             end)
+    assert assets == names |> Enum.reduce(MapSet.new(), fn name, acc ->
+      file = name_to_file(name)
+      MapSet.put(acc, hash(file))
+    end)
   end
 
   defp assert_registered_imports(names, assets) do
-    cwd = File.cwd!()
+    assert assets == names |> Enum.reduce(%{}, fn name, acc ->
+      file = name_to_file(name)
+      Map.put(acc, hash(file), file)
+    end)
+  end
 
-    assert assets ==
-             names
-             |> Enum.reduce(%{}, fn el, acc ->
-              file =
-                Path.join(".", cwd
-                |> Path.join("assets")
-                |> Path.join(el)
-                |> Path.relative_to(Application.get_env(:asset_import, :assets_path)))
+  defp name_to_file(name) do
+    file =
+      File.cwd!()
+      |> Path.join("assets")
+      |> Path.join(name)
+      |> Path.relative_to(Application.get_env(:asset_import, :assets_path))
 
-               Map.put(acc, hash(file), file)
-             end)
+    if String.starts_with?(file, "/") do
+      file
+    else
+      Path.join(".", file)
+    end
   end
 
   defp hash(value) do

@@ -35,6 +35,9 @@ defmodule AssetImportTest do
 
     assert is_binary(render_scripts())
     assert is_binary(render_styles())
+
+    assert function_exported?(AssetImportTest, :__phoenix_recompile__?, 0)
+    refute function_exported?(AssetImportTest.Sub, :__phoenix_recompile__?, 0)
   end
 
   defp assert_asset_imports(names, assets) do

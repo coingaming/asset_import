@@ -6,6 +6,7 @@ defmodule AssetImport do
     quote do
       defmacro __using__(_) do
         Module.put_attribute(__CALLER__.module, :asset_imports, Map.new())
+        manifest_file = unquote(manifest_file)
 
         quote do
           import unquote(__MODULE__)
@@ -28,6 +29,12 @@ defmodule AssetImport do
           |> AssetImport.manifest_assets(".js")
           |> Macro.escape()
 
+        Module.put_attribute(
+          __CALLER__.module,
+          :asset_imports_manifest_file,
+          unquote(manifest_file)
+        )
+
         quote do
           AssetImport.imports(unquote(manifest))
         end
@@ -38,6 +45,12 @@ defmodule AssetImport do
           unquote(manifest_file)
           |> AssetImport.manifest_assets(".css")
           |> Macro.escape()
+
+        Module.put_attribute(
+          __CALLER__.module,
+          :asset_imports_manifest_file,
+          unquote(manifest_file)
+        )
 
         quote do
           AssetImport.imports(unquote(manifest))
@@ -55,11 +68,28 @@ defmodule AssetImport do
   end
 
   @doc false
-  defmacro __before_compile__(_env) do
-    quote do
-      def __asset_imports__ do
-        @asset_imports
+  defmacro __before_compile__(env) do
+    manifest_file = Module.get_attribute(env.module, :asset_imports_manifest_file)
+
+    asset_imports_ast =
+      quote do
+        def __asset_imports__ do
+          @asset_imports
+        end
       end
+
+    if manifest_file do
+      [
+        asset_imports_ast,
+        quote do
+          def __phoenix_recompile__? do
+            unquote(AssetImport.manifest_hash(manifest_file)) !=
+              AssetImport.manifest_hash(unquote(manifest_file))
+          end
+        end
+      ]
+    else
+      asset_imports_ast
     end
   end
 
@@ -210,6 +240,12 @@ defmodule AssetImport do
     :erlang.function_exported(module, function, arity)
   end
 
+  def manifest_hash(manifest_file) do
+    manifest_file
+    |> read_manifest()
+    |> :erlang.md5()
+  end
+
   def read_manifest(manifest_file) do
     manifest_file
     |> File.read()
@@ -238,20 +274,5 @@ defmodule AssetImport do
         Map.put(acc, name, [{order, file} | Map.get(acc, name, [])])
       end)
     end)
-
-    # |> Enum.sort()
-  end
-
-  def manifest_assets(manifest, asset_name, extension) do
-    manifest
-    |> Enum.filter(fn {name, file} ->
-      Path.extname(file) == extension &&
-        (String.contains?(name, "~#{asset_name}~") ||
-           String.contains?(name, "~#{asset_name}.") ||
-           String.starts_with?(name, "#{asset_name}~") ||
-           String.starts_with?(name, "#{asset_name}."))
-    end)
-    |> Enum.map(fn {_, file} -> file end)
-    |> Enum.sort()
   end
 end

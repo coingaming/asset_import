@@ -29,8 +29,6 @@ defmodule AssetImportTest do
     assert is_list(styles())
     assert is_binary(render_scripts())
     assert is_binary(render_styles())
-    assert function_exported?(AssetImportTest, :__phoenix_recompile__?, 0)
-    refute function_exported?(AssetImportTest.Sub, :__phoenix_recompile__?, 0)
   end
 
   defp assert_current_imports(expected_names) do

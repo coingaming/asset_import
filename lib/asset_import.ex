@@ -1,121 +1,108 @@
 defmodule AssetImport do
-  alias AssetImport.EndpointsWriter
+  alias IO.ANSI
 
   defmacro __using__(opts) do
-    assets_path = Keyword.get(opts, :assets_path, "assets/")
-    manifest_file = Keyword.get(opts, :manifest_file, "priv/manifest.json")
+    assets_path = Keyword.get(opts, :assets_path, "assets")
 
     quote do
+
+      defmodule Assets do
+        defmacro scripts() do
+          manifest =
+            AssetImport.manifest_assets(".js")
+            |> Macro.escape()
+
+          quote do
+            AssetImport.imports(unquote(manifest))
+          end
+        end
+
+        defmacro styles() do
+          manifest =
+            AssetImport.manifest_assets(".css")
+            |> Macro.escape()
+
+          quote do
+            AssetImport.imports(unquote(manifest))
+          end
+        end
+
+        def render_scripts do
+          AssetImport.render_scripts(scripts())
+        end
+
+        def render_styles do
+          AssetImport.render_styles(styles())
+        end
+
+        def __phoenix_recompile__? do
+          unquote(AssetImport.manifest_hash()) != AssetImport.manifest_hash()
+        end
+      end
+
       defmacro __using__(_) do
         Module.put_attribute(__CALLER__.module, :asset_imports, Map.new())
-        manifest_file = unquote(manifest_file)
 
         quote do
           import unquote(__MODULE__)
+          import unquote(__MODULE__).Assets, only: [scripts: 0, styles: 0, render_scripts: 0, render_styles: 0]
           @before_compile AssetImport
           @after_compile AssetImport
         end
       end
 
       defmacro asset_import(name) do
-        asset_hash = AssetImport.register_import(__CALLER__.module, unquote(assets_path), name)
+        asset_hash = AssetImport.register_import(__CALLER__, unquote(assets_path), name)
 
         quote do
           AssetImport.asset_import(unquote(asset_hash))
         end
       end
+    end
+  end
 
-      defmacro scripts() do
-        manifest =
-          unquote(manifest_file)
-          |> AssetImport.manifest_assets(".js")
-          |> Macro.escape()
-
-        Module.put_attribute(
-          __CALLER__.module,
-          :asset_imports_manifest_file,
-          unquote(manifest_file)
-        )
-
-        quote do
-          AssetImport.imports(unquote(manifest))
-        end
-      end
-
-      defmacro styles() do
-        manifest =
-          unquote(manifest_file)
-          |> AssetImport.manifest_assets(".css")
-          |> Macro.escape()
-
-        Module.put_attribute(
-          __CALLER__.module,
-          :asset_imports_manifest_file,
-          unquote(manifest_file)
-        )
-
-        quote do
-          AssetImport.imports(unquote(manifest))
-        end
-      end
-
-      def render_scripts do
-        AssetImport.render_scripts(scripts())
-      end
-
-      def render_styles do
-        AssetImport.render_styles(styles())
+  @doc false
+  defmacro __before_compile__(_env) do
+    quote do
+      def __asset_imports__ do
+        @asset_imports
       end
     end
   end
 
   @doc false
-  defmacro __before_compile__(env) do
-    manifest_file = Module.get_attribute(env.module, :asset_imports_manifest_file)
+  def __after_compile__(env, _bytecode) do
+    write_entrypoints(env)
+  end
 
-    asset_imports_ast =
-      quote do
-        def __asset_imports__ do
-          @asset_imports
-        end
-      end
+  defp write_entrypoints(_env) do
+    content = Jason.encode!(AssetImport.get_asset_imports(), pretty: true)
+    file_path = Application.get_env(:asset_import, :assets_path) |> Path.join("entrypoints.json")
 
-    if manifest_file do
-      [
-        asset_imports_ast,
-        quote do
-          def __phoenix_recompile__? do
-            unquote(AssetImport.manifest_hash(manifest_file)) !=
-              AssetImport.manifest_hash(unquote(manifest_file))
-          end
-        end
-      ]
-    else
-      asset_imports_ast
+    case File.read(file_path) do
+      {:ok, ^content} ->
+        :ok
+
+      _ ->
+        :ok = File.write(file_path, content)
     end
   end
 
   @doc false
-  def __after_compile__(_env, _bytecode) do
-    EndpointsWriter.write(self())
-  end
+  def register_import(caller, assets_path, name) do
+    module = caller.module
 
-  @doc false
-  def register_import(module, assets_path, name) do
     abs_path =
       File.cwd!()
       |> Path.join(assets_path)
       |> Path.join(name)
 
     unless File.exists?(abs_path) || File.exists?(abs_path <> ".js") do
-      if Path.extname(abs_path) == ".js" do
-        raise "Asset #{abs_path} not found."
-      else
-        raise """
-        Asset #{abs_path} not found.
-        Either a file #{name}.js or #{name}/index.js should exist."
-        """
-      end
+      raise CompileError.exception(
+              description: asset_not_found_error(assets_path, name),
+              file: caller.file,
+              line: caller.line
+            )
     end
 
     rel_path =
@@ -156,7 +143,7 @@ defmodule AssetImport do
   end
 
   def current_imports do
-    Process.get(:asset_imports)
+    Process.get(:asset_imports) || MapSet.new()
   end
 
   @doc false
@@ -182,7 +169,7 @@ defmodule AssetImport do
     |> String.slice(0..7)
   end
 
-  defp get_modules() do
+  def get_modules() do
     compiling_modules = get_compiling_modules()
 
     fetch_compiled_modules()
@@ -197,7 +184,7 @@ defmodule AssetImport do
     Agent.update(name, &MapSet.put(&1, module))
   end
 
-  defp get_compiling_modules do
+  def get_compiling_modules do
     name = compiling_modules_agent_name()
 
     if Process.whereis(name) do
@@ -221,8 +208,8 @@ defmodule AssetImport do
         true ->
           dir
           |> File.ls!()
-          |> Stream.filter(
-            &(String.starts_with?(&1, "Elixir.") && String.ends_with?(&1, ".beam"))
+          |> Enum.filter(
+            &(String.starts_with?(&1, "Elixir") && String.ends_with?(&1, ".beam"))
           )
           |> Enum.map(&(Regex.replace(~r/(\.beam)$/, &1, fn _, _ -> "" end) |> String.to_atom()))
 
@@ -245,13 +232,14 @@ defmodule AssetImport do
   end
 
   @doc false
-  def manifest_hash(manifest_file) do
-    manifest_file
-    |> read_manifest()
+  def manifest_hash() do
+    read_manifest()
     |> :erlang.md5()
   end
 
-  defp read_manifest(manifest_file) do
+  defp read_manifest() do
+    manifest_file = Application.get_env(:asset_import, :manifest_path, "priv/manifest.json")
+
     manifest_file
     |> File.read()
     |> case do
@@ -265,9 +253,8 @@ defmodule AssetImport do
   end
 
   @doc false
-  def manifest_assets(manifest_file, extension) do
-    manifest_file
-    |> read_manifest()
+  def manifest_assets(extension) do
+    read_manifest()
     |> Jason.decode!()
     |> Enum.filter(fn {_, file} ->
       Path.extname(file) == extension
@@ -280,5 +267,18 @@ defmodule AssetImport do
         Map.put(acc, name, [{order, file} | Map.get(acc, name, [])])
       end)
     end)
+  end
+
+  defp asset_not_found_error(assets_path, name) do
+    file_path = assets_path |> Path.join(name)
+    dir_path = file_path |> Path.join("index.js")
+
+    if Path.extname(name) == ".js" do
+      "\n\nAsset #{ANSI.green()}#{file_path}#{ANSI.default_color()} not found.\n"
+    else
+      "\n\nAsset #{ANSI.red()}#{file_path}#{ANSI.default_color()} not found. " <>
+        "Please create either #{ANSI.green()}#{file_path}.js#{ANSI.default_color()} or " <>
+        "#{ANSI.green()}#{dir_path}#{ANSI.default_color()}.\n"
+    end
   end
 end

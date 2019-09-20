@@ -5,6 +5,13 @@ const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const ManifestPlugin = require('webpack-manifest-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const entrypoints = require('./entrypoints.json') || {};
+
+if (Object.keys(entrypoints).length === 0) {
+  console.log('No entrypoints');
+  process.exit();
+  return;
+}
 
 module.exports = (env, options) => ({
   optimization: {

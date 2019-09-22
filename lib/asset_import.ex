@@ -1,6 +1,8 @@
 defmodule AssetImport do
   alias IO.ANSI
 
+  require Logger
+
   defmacro __using__(opts) do
     assets_path = Keyword.get(opts, :assets_path, "assets")
 
@@ -71,13 +73,14 @@ defmodule AssetImport do
 
   defp write_entrypoints(_env) do
     content = Jason.encode!(AssetImport.get_asset_imports(), pretty: true)
-    file_path = Application.get_env(:asset_import, :assets_path) |> Path.join("entrypoints.json")
+    file_path = config(:entrypoints_path)
 
     case File.read(file_path) do
       {:ok, ^content} ->
         :ok
 
       _ ->
+        Logger.info("Writing assets endpoints (#{content |> String.length()}B)")
         :ok = File.write(file_path, content)
     end
   end
@@ -101,7 +104,7 @@ defmodule AssetImport do
 
     rel_path =
       abs_path
-      |> Path.relative_to(Application.get_env(:asset_import, :assets_path))
+      |> Path.relative_to(config(:assets_path))
       |> case do
         file = "/" <> _ ->
           file
@@ -130,7 +133,6 @@ defmodule AssetImport do
 
   @doc false
   def imports(manifest) do
-    Application.get_env(:asset_import, :asset_, "assets")
     current_imports()
     |> MapSet.put("runtime")
     |> Enum.reduce([], &(&2 ++ Map.get(manifest, &1, [])))
@@ -197,13 +199,13 @@ defmodule AssetImport do
   end
 
   @doc false
-  def manifest_hash() do
+  def manifest_hash do
     read_manifest()
     |> :erlang.md5()
   end
 
-  defp read_manifest() do
-    manifest_file = Application.get_env(:asset_import, :manifest_path, "priv/static/manifest.json")
+  defp read_manifest do
+    manifest_file = config(:manifest_path)
 
     manifest_file
     |> File.read()
@@ -212,7 +214,7 @@ defmodule AssetImport do
         body
 
       {:error, _} ->
-        IO.warn("Asset manifest file (#{manifest_file}) not found. Build assets first.")
+        IO.warn("Asset manifest file (#{manifest_file}) not found. Build assets first.", [])
         "{}"
     end
   end
@@ -244,6 +246,28 @@ defmodule AssetImport do
       "\n\nAsset #{ANSI.red()}#{file_path}#{ANSI.default_color()} not found. " <>
         "Please create either #{ANSI.green()}#{file_path}.js#{ANSI.default_color()} or " <>
         "#{ANSI.green()}#{dir_path}#{ANSI.default_color()}.\n"
+    end
+  end
+
+  defp config(field) do
+    case Application.get_env(:asset_import, field) do
+      nil ->
+        """
+        Missing `:asset_import` config field `#{inspect(field)}`.
+
+        Example config:
+
+            config :asset_import,
+              assets_path: File.cwd!() |> Path.join("assets"),
+              manifest_path: File.cwd!() |> Path.join("priv/static/manifest.json"),
+              entrypoints_path: File.cwd!() |> Path.join("assets/entrypoints.json")
+        """
+        |> IO.ANSI.Docs.print()
+
+        raise CompileError.exception(description: "Missing config field #{inspect(field)}")
+
+      value ->
+        value
     end
   end
 end

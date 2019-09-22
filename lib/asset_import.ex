@@ -5,7 +5,7 @@ defmodule AssetImport do
     assets_path = Keyword.get(opts, :assets_path, "assets")
 
     quote do
-      defmodule Assets do
+      defmodule Files do
         defmacro scripts() do
           manifest =
             AssetImport.manifest_assets(".js")
@@ -26,14 +26,6 @@ defmodule AssetImport do
           end
         end
 
-        def render_scripts do
-          AssetImport.render_scripts(scripts())
-        end
-
-        def render_styles do
-          AssetImport.render_styles(styles())
-        end
-
         def __phoenix_recompile__? do
           unquote(AssetImport.manifest_hash()) != AssetImport.manifest_hash()
         end
@@ -45,8 +37,8 @@ defmodule AssetImport do
         quote do
           import unquote(__MODULE__)
 
-          import unquote(__MODULE__).Assets,
-            only: [scripts: 0, styles: 0, render_scripts: 0, render_styles: 0]
+          import unquote(__MODULE__).Files,
+            only: [scripts: 0, styles: 0]
 
           @before_compile AssetImport
           @after_compile AssetImport
@@ -132,24 +124,13 @@ defmodule AssetImport do
     Process.put(:asset_imports, MapSet.put(current_imports, asset_hash))
   end
 
-  def render_scripts(assets) do
-    assets
-    |> Enum.map(&"<script type=\"application/javascript\" src=\"#{&1}\"></script>")
-    |> Enum.join("\n")
-  end
-
-  def render_styles(assets) do
-    assets
-    |> Enum.map(&"<link rel=\"stylesheet\" type=\"text/css\" href=\"#{&1}\">")
-    |> Enum.join("\n")
-  end
-
   def current_imports do
     Process.get(:asset_imports) || MapSet.new()
   end
 
   @doc false
   def imports(manifest) do
+    Application.get_env(:asset_import, :asset_, "assets")
     current_imports()
     |> MapSet.put("runtime")
     |> Enum.reduce([], &(&2 ++ Map.get(manifest, &1, [])))
@@ -175,7 +156,7 @@ defmodule AssetImport do
     compiling_modules = get_compiling_modules()
 
     get_compiled_modules()
-    |> Stream.filter(&(Code.ensure_loaded?(&1) and function_exported?(&1, :__asset_imports__?, 0)))
+    |> Stream.filter(&(Code.ensure_loaded?(&1) and function_exported?(&1, :__asset_imports__, 0)))
     |> MapSet.new()
     |> MapSet.union(compiling_modules)
   end
@@ -222,7 +203,7 @@ defmodule AssetImport do
   end
 
   defp read_manifest() do
-    manifest_file = Application.get_env(:asset_import, :manifest_path, "priv/manifest.json")
+    manifest_file = Application.get_env(:asset_import, :manifest_path, "priv/static/manifest.json")
 
     manifest_file
     |> File.read()

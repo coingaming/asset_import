@@ -1,4 +1,5 @@
 const path = require('path');
+const { ProvidePlugin } = require('webpack');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
@@ -27,11 +28,14 @@ module.exports = (env, options) => ({
       minSize: 0
     }
   },
-  entry: require('./entrypoints.json'),
+  stats: {
+    warnings: false
+  },
+  entry: entrypoints,
   output: {
     filename: options.mode === 'production' ? '[id]-[contenthash].js' : '[id].js',
     chunkFilename: options.mode === 'production' ? '[id]-[contenthash].js' : '[id].js',
-    path: path.resolve(__dirname, '../priv/static')
+    path: path.resolve(__dirname, '../priv/static/assets')
   },
   module: {
     rules: [
@@ -77,5 +81,10 @@ module.exports = (env, options) => ({
     new CopyWebpackPlugin([{ from: 'static/', to: './' }]),
     new ManifestPlugin({ fileName: '../manifest.json' }),
     new CleanWebpackPlugin(),
+    new ProvidePlugin({
+      $: 'jquery',
+      jQuery: 'jquery',
+      Popper: ['popper.js', 'default']
+    })
   ]
 });

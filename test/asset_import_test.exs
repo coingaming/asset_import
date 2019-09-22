@@ -27,8 +27,6 @@ defmodule AssetImportTest do
     assert_current_imports(["hello", "world"])
     assert is_list(scripts())
     assert is_list(styles())
-    assert is_binary(render_scripts())
-    assert is_binary(render_styles())
   end
 
   defp assert_current_imports(expected_names) do

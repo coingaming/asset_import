@@ -25,8 +25,8 @@ defmodule AssetImportTest do
     asset_import("world")
 
     assert_current_imports(["hello", "world"])
-    assert is_list(scripts())
-    assert is_list(styles())
+    assert [_, _, _] = scripts()
+    assert [_] = styles()
   end
 
   defp assert_current_imports(expected_names) do

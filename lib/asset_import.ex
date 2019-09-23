@@ -1,7 +1,6 @@
 defmodule AssetImport do
-  alias IO.ANSI
-
   require Logger
+  import IO.ANSI
 
   defmacro __using__(opts) do
     assets_path = Keyword.get(opts, :assets_path, "assets")
@@ -67,11 +66,16 @@ defmodule AssetImport do
   end
 
   @doc false
-  def __after_compile__(env, _bytecode) do
-    write_entrypoints(env)
+  def __after_compile__(_env, _bytecode) do
+    # run in agent to avoid race conditions
+    Agent.start(fn -> nil end, name: :asset_import_writer)
+    Agent.update(:asset_import_writer, fn nil ->
+      write_entrypoints()
+      nil
+    end)
   end
 
-  defp write_entrypoints(_env) do
+  defp write_entrypoints() do
     content = Jason.encode!(AssetImport.get_asset_imports(), pretty: true)
     file_path = config(:entrypoints_path)
 
@@ -155,33 +159,26 @@ defmodule AssetImport do
   end
 
   def get_modules() do
-    compiling_modules = get_compiling_modules()
+    compiling_modules =
+      get_compiling_modules()
+      |> MapSet.to_list()
 
-    get_compiled_modules()
+    (compiling_modules ++ get_compiled_modules())
     |> Stream.filter(&(Code.ensure_loaded?(&1) and function_exported?(&1, :__asset_imports__, 0)))
     |> MapSet.new()
-    |> MapSet.union(compiling_modules)
   end
 
   defp put_compiling_module(module) do
-    name = compiling_modules_agent_name()
-    Agent.start(fn -> MapSet.new() end, name: name)
-    Agent.update(name, &MapSet.put(&1, module))
+    Agent.start(fn -> MapSet.new() end, name: __MODULE__)
+    Agent.update(__MODULE__, &MapSet.put(&1, module))
   end
 
   def get_compiling_modules do
-    name = compiling_modules_agent_name()
-
-    if Process.whereis(name) do
-      Agent.get(name, & &1)
+    if Process.whereis(__MODULE__) do
+      Agent.get(__MODULE__, & &1)
     else
       MapSet.new()
     end
-  end
-
-  defp compiling_modules_agent_name() do
-    (Atom.to_string(Mix.Project.config()[:app]) <> "_asset_imports")
-    |> String.to_atom()
   end
 
   @doc """
@@ -239,13 +236,12 @@ defmodule AssetImport do
   defp asset_not_found_error(assets_path, name) do
     file_path = assets_path |> Path.join(name)
     dir_path = file_path |> Path.join("index.js")
-
     if Path.extname(name) == ".js" do
-      "\n\nAsset #{ANSI.green()}#{file_path}#{ANSI.default_color()} not found.\n"
+      "\n\nAsset #{green()}#{file_path}#{default_color()} not found.\n"
     else
-      "\n\nAsset #{ANSI.red()}#{file_path}#{ANSI.default_color()} not found. " <>
-        "Please create either #{ANSI.green()}#{file_path}.js#{ANSI.default_color()} or " <>
-        "#{ANSI.green()}#{dir_path}#{ANSI.default_color()}.\n"
+      "\n\nAsset #{red()}#{file_path}#{default_color()} not found. " <>
+        "Please create either #{green()}#{file_path}.js#{default_color()} or " <>
+        "#{green()}#{dir_path}#{default_color()}.\n"
     end
   end
 

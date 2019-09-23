@@ -12,12 +12,25 @@ defmodule AssetImportTest do
     end
   end
 
-  test "asset_import/1" do
+  test "asset_import/1 success" do
     asset_import("hello")
     asset_import("world")
 
     assert_current_imports(["hello", "world"])
     assert_registered_imports(["hello", "world", "from", "sub", "and", "some", "other", "module"])
+  end
+
+  test "asset_import/1 asset not found" do
+    asset_import("hello")
+
+    assert_raise CompileError, fn ->
+      quote do
+        asset_import("nonexistent")
+      end
+      |> Code.eval_quoted()
+    end
+
+    assert_current_imports(["hello"])
   end
 
   test "scripts/0" do

@@ -1,10 +1,24 @@
 defmodule AssetImportTest do
   use ExUnit.Case
+  use AssetImportTest.Assets
+  use Phoenix.ConnTest
 
-  use AssetImport.Assets
+  import Phoenix.LiveViewTest
+
+  alias Phoenix.LiveView
+  alias Phoenix.LiveViewTest.DOM
+  alias AssetImportTest.{Endpoint, ClockLive, ClockControlsLive}
+
+  @endpoint Endpoint
+  @moduletag :capture_log
+
+  setup config do
+    {:ok,
+     conn: Plug.Test.init_test_session(Phoenix.ConnTest.build_conn(), config[:session] || %{})}
+  end
 
   defmodule Sub do
-    use AssetImport.Assets
+    use AssetImportTest.Assets
 
     def hello do
       asset_import("from")
@@ -12,25 +26,76 @@ defmodule AssetImportTest do
     end
   end
 
-  test "asset_import/1 success" do
-    asset_import("hello")
-    asset_import("world")
+  describe "asset_import/1" do
+    test "all registered imports" do
+      asset_import("hello")
+      asset_import("world")
 
-    assert_current_imports(["hello", "world"])
-    assert_registered_imports(["hello", "world", "from", "sub", "and", "some", "other", "module"])
-  end
-
-  test "asset_import/1 asset not found" do
-    asset_import("hello")
-
-    assert_raise CompileError, fn ->
-      quote do
-        asset_import("nonexistent")
-      end
-      |> Code.eval_quoted()
+      assert_registered_imports([
+        "hello",
+        "world",
+        "from",
+        "sub",
+        "and",
+        "some",
+        "other",
+        "module",
+        "thermostat",
+        "thermostat/clock",
+        "thermostat/clock/static_controls",
+        "thermostat/clock/live_controls"
+      ])
     end
 
-    assert_current_imports(["hello"])
+    test "current imports" do
+      asset_import("hello")
+      asset_import("world")
+
+      assert_current_imports(["hello", "world"])
+    end
+
+    test "asset not found" do
+      asset_import("hello")
+
+      assert_raise CompileError, fn ->
+        quote do
+          asset_import("nonexistent")
+        end
+        |> Code.eval_quoted()
+      end
+
+      assert_current_imports(["hello"])
+    end
+  end
+
+  describe "live view" do
+
+    @tag session: %{nest: []}
+    test "static render", %{conn: conn} do
+      conn = get(conn, "/thermo")
+      assert html_response(conn, 200) =~ "The temp is: 0"
+
+      {:ok, _view, html} = live(conn)
+      assert html =~ "The temp is: 1"
+
+      assert_current_imports([
+        "thermostat",
+        "thermostat/clock",
+        "thermostat/clock/static_controls"
+      ])
+    end
+
+    test "live render", %{conn: conn} do
+      conn = get(conn, "/thermo")
+      assert html_response(conn, 200) =~ "The temp is: 0"
+
+      {:ok, _view, html} = live(conn)
+      assert html =~ "The temp is: 1"
+
+      assert_current_imports([
+        "thermostat"
+      ])
+    end
   end
 
   test "scripts/0" do
@@ -46,7 +111,7 @@ defmodule AssetImportTest do
     expected_assets =
       Enum.reduce(expected_names, MapSet.new(), &MapSet.put(&2, hash(name_to_file(&1))))
 
-    assert AssetImport.current_imports() == expected_assets
+    assert expected_assets == AssetImport.current_imports()
   end
 
   defp assert_registered_imports(expected_names) do
@@ -57,7 +122,7 @@ defmodule AssetImportTest do
         Map.put(acc, hash(file), file)
       end)
 
-    assert AssetImport.get_asset_imports() == expected_assets
+    assert expected_assets == AssetImport.get_asset_imports()
   end
 
   defp name_to_file(name) do

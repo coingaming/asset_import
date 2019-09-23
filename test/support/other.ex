@@ -1,5 +1,5 @@
 defmodule AssetImport.Other do
-  use AssetImport.Assets
+  use AssetImportTest.Assets
 
   def hello do
     asset_import("other")

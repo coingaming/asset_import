@@ -1,3 +1,3 @@
-defmodule AssetImport.Assets do
+defmodule AssetImportTest.Assets do
   use AssetImport
 end

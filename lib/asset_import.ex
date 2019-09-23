@@ -48,7 +48,7 @@ defmodule AssetImport do
 
       defmacro asset_import(name) do
         asset_hash = AssetImport.register_import(__CALLER__, unquote(assets_path), name)
-
+        IO.inspect(__CALLER__)
         quote do
           AssetImport.asset_import(unquote(asset_hash))
         end

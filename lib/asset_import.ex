@@ -89,6 +89,10 @@ defmodule AssetImport do
     end
   end
 
+  def render_manifest do
+    "<script>window.manifest = #{Jason.encode!(get_asset_imports())}</script>"
+  end
+
   @doc false
   def register_import(caller, assets_path, name) do
     module = caller.module

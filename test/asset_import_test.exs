@@ -5,9 +5,10 @@ defmodule AssetImportTest do
 
   import Phoenix.LiveViewTest
 
-  alias Phoenix.LiveView
-  alias Phoenix.LiveViewTest.DOM
-  alias AssetImportTest.{Endpoint, ClockLive, ClockControlsLive}
+  # alias Phoenix.LiveView
+  # alias Phoenix.LiveViewTest.DOM
+  alias AssetImportTest.Endpoint
+  #, ClockLive, ClockControlsLive}
 
   @endpoint Endpoint
   @moduletag :capture_log
@@ -98,13 +99,13 @@ defmodule AssetImportTest do
     end
   end
 
-  test "scripts/0" do
+  test "asset_script_files/0 and asset_style_files/0" do
     asset_import("hello")
     asset_import("world")
 
     assert_current_imports(["hello", "world"])
-    assert [_, _, _, _] = scripts()
-    assert [_] = styles()
+    assert [_, _, _, _] = asset_script_files()
+    assert [_] = asset_style_files()
   end
 
   defp assert_current_imports(expected_names) do
@@ -122,7 +123,7 @@ defmodule AssetImportTest do
         Map.put(acc, hash(file), file)
       end)
 
-    assert expected_assets == AssetImport.get_asset_imports()
+    assert expected_assets == AssetImport.registered_imports()
   end
 
   defp name_to_file(name) do

@@ -8,6 +8,23 @@ const ManifestPlugin = require('webpack-manifest-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const entrypoints = require('./entrypoints.json') || {};
 
+const rootSourcePaths = [
+  'node_modules/@heathmont/looper/src/assets'
+];
+
+const checkRootPath = fallback => src => {
+  const relativePath = path.relative(cwd, src);
+  for (let i in rootSourcePaths) {
+    const rootPath = rootSourcePaths[i];
+    if (relativePath.startsWith(rootPath)) {
+      return path.relative(rootPath, src);
+    }
+  }
+  return fallback;
+};
+
+const cwd = process.cwd();
+
 if (Object.keys(entrypoints).length === 0) {
   console.log('No entrypoints');
   process.exit();
@@ -17,7 +34,7 @@ if (Object.keys(entrypoints).length === 0) {
 module.exports = (env, options) => ({
   optimization: {
     minimizer: [
-      new UglifyJsPlugin({ cache: true, parallel: true, sourceMap: false }),
+      // new UglifyJsPlugin({ cache: true, parallel: true, sourceMap: false }),
       new OptimizeCSSAssetsPlugin({})
     ],
     runtimeChunk: 'single',
@@ -54,22 +71,26 @@ module.exports = (env, options) => ({
         test: /\.(png|jpg|gif)(\?v=\d+\.\d+\.\d+)?$/,
         loader: 'file-loader',
         options: {
-          name: 'img/[name].[ext]'
+          name: checkRootPath('img/[name].[ext]')
         }
       },
       {
         test: /\.(eot|com|json|ttf|woff|woff2)(\?v=\d+\.\d+\.\d+)?$/,
         loader: 'file-loader',
         options: {
-          name: 'fonts/[name].[ext]'
+          name: checkRootPath('fonts/[name].[ext]')
         }
       },
       {
         test: /\.svg(\?v=\d+\.\d+\.\d+)?$/,
         loader: 'file-loader',
         options: {
-          name: 'svg/[name].[ext]'
+          name: checkRootPath('svg/[name].[ext]')
         }
+      },
+      {
+        test: require.resolve("pace-progress"),
+        loader: "imports-loader?define=>false"
       }
     ]
   },

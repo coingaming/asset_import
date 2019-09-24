@@ -28,6 +28,7 @@ defmodule AssetImport.MixProject do
     [
       {:jason, "~> 1.1"},
       {:phoenix, "~> 1.4", only: :test},
+      {:phoenix_html, "~> 2.13", only: :test},
       {:phoenix_live_view, "~> 0.3", only: :test},
       {:mix_test_watch, "~> 0.5", only: :dev, runtime: false},
       {:ex_unit_notifier, "~> 0.1", only: :test},

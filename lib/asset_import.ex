@@ -7,9 +7,12 @@ defmodule AssetImport do
 
     quote do
       defmodule Files do
-        defmacro scripts() do
+        @manifest AssetImport.read_manifest() |> Jason.decode!()
+
+        defmacro asset_script_files do
           manifest =
-            AssetImport.manifest_assets(".js")
+            @manifest
+            |> AssetImport.manifest_assets_by_extension(".js")
             |> Macro.escape()
 
           quote do
@@ -17,20 +20,31 @@ defmodule AssetImport do
           end
         end
 
-        defmacro styles() do
+        defmacro asset_style_files do
           manifest =
-            AssetImport.manifest_assets(".css")
+            @manifest
+            |> AssetImport.manifest_assets_by_extension(".css")
             |> Macro.escape()
 
           quote do
             AssetImport.imports(unquote(manifest))
           end
+        end
+
+        def asset_scripts do
+          AssetImport.render_scripts(asset_script_files())
+        end
+
+        def asset_styles do
+          AssetImport.render_styles(asset_style_files())
         end
 
         def __phoenix_recompile__? do
           unquote(AssetImport.manifest_hash()) != AssetImport.manifest_hash()
         end
       end
+
+      @manifest AssetImport.read_manifest() |> Jason.decode!()
 
       defmacro __using__(_) do
         Module.put_attribute(__CALLER__.module, :asset_imports, Map.new())
@@ -39,7 +53,7 @@ defmodule AssetImport do
           import unquote(__MODULE__)
 
           import unquote(__MODULE__).Files,
-            only: [scripts: 0, styles: 0]
+            only: [asset_script_files: 0, asset_style_files: 0, asset_scripts: 0, asset_styles: 0]
 
           @before_compile AssetImport
           @after_compile AssetImport
@@ -48,10 +62,18 @@ defmodule AssetImport do
 
       defmacro asset_import(name) do
         asset_hash = AssetImport.register_import(__CALLER__, unquote(assets_path), name)
-        IO.inspect(__CALLER__)
+
+        files =
+          @manifest
+          |> AssetImport.manifest_assets_by_hash(asset_hash)
+
         quote do
-          AssetImport.asset_import(unquote(asset_hash))
+          AssetImport.asset_import(unquote(asset_hash), unquote(files))
         end
+      end
+
+      def __phoenix_recompile__? do
+        unquote(AssetImport.manifest_hash()) != AssetImport.manifest_hash()
       end
     end
   end
@@ -69,6 +91,7 @@ defmodule AssetImport do
   def __after_compile__(_env, _bytecode) do
     # run in agent to avoid race conditions
     Agent.start(fn -> nil end, name: :asset_import_writer)
+
     Agent.update(:asset_import_writer, fn nil ->
       write_entrypoints()
       nil
@@ -76,7 +99,7 @@ defmodule AssetImport do
   end
 
   defp write_entrypoints() do
-    content = Jason.encode!(AssetImport.get_asset_imports(), pretty: true)
+    content = Jason.encode!(AssetImport.registered_imports(), pretty: true)
     file_path = config(:entrypoints_path)
 
     case File.read(file_path) do
@@ -89,8 +112,18 @@ defmodule AssetImport do
     end
   end
 
-  def render_manifest do
-    "<script>window.manifest = #{Jason.encode!(get_asset_imports())}</script>"
+  def render_scripts(scripts) do
+    scripts
+    |> Enum.map(&~s|<script type="text/javascript" src="#{&1}"></script>|)
+    |> Enum.join("")
+    |> Phoenix.HTML.raw()
+  end
+
+  def render_styles(styles) do
+    styles
+    |> Enum.map(&~s|<link rel="stylesheet" type="text/css" href="#{&1}"/>|)
+    |> Enum.join("")
+    |> Phoenix.HTML.raw()
   end
 
   @doc false
@@ -130,9 +163,30 @@ defmodule AssetImport do
   end
 
   @doc false
-  def asset_import(asset_hash) do
+  def registered_imports() do
+    get_modules()
+    |> Enum.reduce(Map.new(), &Map.merge(&2, &1.__asset_imports__()))
+  end
+
+  @doc false
+  def asset_import(asset_hash, imports) do
     current_imports = Process.get(:asset_imports, MapSet.new())
     Process.put(:asset_imports, MapSet.put(current_imports, asset_hash))
+
+    files =
+      imports
+        |> Enum.sort()
+        |> Enum.map(fn {_, file} -> file end)
+        |> Enum.join(" ")
+
+    case files do
+      "" ->
+        nil
+
+      files ->
+        ~s|<div style="display: none" phx-hook="AssetImport" data-asset-files="#{files}"></div>|
+        |> Phoenix.HTML.raw()
+    end
   end
 
   def current_imports do
@@ -144,14 +198,8 @@ defmodule AssetImport do
     current_imports()
     |> MapSet.put("runtime")
     |> Enum.reduce([], &(&2 ++ Map.get(manifest, &1, [])))
-    |> Enum.map(fn {_, file} -> file end)
     |> Enum.sort()
-  end
-
-  @doc false
-  def get_asset_imports() do
-    get_modules()
-    |> Enum.reduce(Map.new(), &Map.merge(&2, &1.__asset_imports__()))
+    |> Enum.map(fn {_, file} -> file end)
   end
 
   @doc false
@@ -205,7 +253,7 @@ defmodule AssetImport do
     |> :erlang.md5()
   end
 
-  defp read_manifest do
+  def read_manifest do
     manifest_file = config(:manifest_path)
 
     manifest_file
@@ -221,9 +269,10 @@ defmodule AssetImport do
   end
 
   @doc false
-  def manifest_assets(extension) do
-    read_manifest()
-    |> Jason.decode!()
+  def manifest_assets_by_extension(manifest, extension) do
+    base_url = config(:assets_base_url)
+
+    manifest
     |> Enum.filter(fn {_, file} ->
       Path.extname(file) == extension
     end)
@@ -232,7 +281,25 @@ defmodule AssetImport do
       |> Enum.reduce(acc, fn name, acc ->
         [order_str | _] = String.split(file, "-")
         {order, ""} = Integer.parse(order_str)
-        Map.put(acc, name, [{order, file} | Map.get(acc, name, [])])
+        Map.put(acc, name, [{order, Path.join(base_url, file)} | Map.get(acc, name, [])])
+      end)
+    end)
+  end
+
+  def manifest_assets_by_hash(manifest, asset_hash) do
+    base_url = config(:assets_base_url)
+
+    manifest
+    |> Enum.reduce([], fn {key, file}, acc ->
+      String.split(Path.basename(key, Path.extname(key)), "~")
+      |> Enum.reduce(acc, fn
+        ^asset_hash, acc ->
+          [order_str | _] = String.split(file, "-")
+          {order, ""} = Integer.parse(order_str)
+          [{order, Path.join(base_url, file)} | acc]
+
+        _, acc ->
+          acc
       end)
     end)
   end
@@ -240,6 +307,7 @@ defmodule AssetImport do
   defp asset_not_found_error(assets_path, name) do
     file_path = assets_path |> Path.join(name)
     dir_path = file_path |> Path.join("index.js")
+
     if Path.extname(name) == ".js" do
       "\n\nAsset #{green()}#{file_path}#{default_color()} not found.\n"
     else
@@ -259,6 +327,7 @@ defmodule AssetImport do
 
             config :asset_import,
               assets_path: File.cwd!() |> Path.join("assets"),
+              assets_base_url: "/assets",
               manifest_path: File.cwd!() |> Path.join("priv/static/manifest.json"),
               entrypoints_path: File.cwd!() |> Path.join("assets/entrypoints.json")
         """

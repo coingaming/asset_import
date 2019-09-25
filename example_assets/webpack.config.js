@@ -44,7 +44,7 @@ module.exports = (env, options) => ({
     new CleanWebpackPlugin()
   ],
   stats: {
-    warnings: env.mode === 'production'
+    warnings: false
   },
   module: {
     rules: [
@@ -63,21 +63,21 @@ module.exports = (env, options) => ({
         test: /\.(png|jpg|gif)(\?v=\d+\.\d+\.\d+)?$/,
         loader: 'file-loader',
         options: {
-          name: checkRootPath('img/[name].[ext]')
+          name: 'img/[name].[ext]'
         }
       },
       {
         test: /\.(eot|com|json|ttf|woff|woff2)(\?v=\d+\.\d+\.\d+)?$/,
         loader: 'file-loader',
         options: {
-          name: checkRootPath('fonts/[name].[ext]')
+          name: 'fonts/[name].[ext]'
         }
       },
       {
         test: /\.svg(\?v=\d+\.\d+\.\d+)?$/,
         loader: 'file-loader',
         options: {
-          name: checkRootPath('svg/[name].[ext]')
+          name: 'svg/[name].[ext]'
         }
       }
     ]

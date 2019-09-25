@@ -58,7 +58,7 @@ defmodule AssetImport.MixProject do
       maintainers: ["Reio Piller"],
       licenses: ["MIT"],
       links: %{github: "https://github.com/coingaming/asset_import"},
-      files: ~w(lib assets/index.js LICENSE.md mix.exs README.md)
+      files: ~w(lib index.js package.json LICENSE.md mix.exs README.md)
     ]
   end
 end

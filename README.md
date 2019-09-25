@@ -5,7 +5,7 @@ Webpack asset imports in Phoenix views/templates or LiveView's.
 ## Features
 - Only load assets that are actually used for current render.
 - Quarantees that nothing is over, under, or double fetched.
-- Optimal asset packaging and cacheability with webpack code spliting.
+- Optimal asset packaging and cacheability with webpack code splitting.
 - Supports Phoenix LiveView's by loading assets dynamically.
 - Supports mix dependencies that are using `asset_import`.
 

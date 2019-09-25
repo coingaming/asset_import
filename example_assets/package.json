@@ -9,7 +9,7 @@
     "phoenix": "1.4.10",
     "phoenix_html": "2.13.2",
     "phoenix_live_view": "0.3.0",
-    "asset_import": "0.1.0"
+    "asset_import_hook": "0.1.0"
   },
   "devDependencies": {
     "@babel/core": "7.6.0",

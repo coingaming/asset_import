@@ -150,7 +150,7 @@ Feel free to change files according to your project needs.
 
 1. `example_assets/package.json`:
   - dev dependency `webpack-manifest-plugin`
-  - dependency `asset_import` (Optional, only with LiveView)
+  - dependency `asset_import_hook` (Optional, only with LiveView)
 
 2. `example_assets/webpack.config.js`:
 ```javascript
@@ -196,7 +196,7 @@ Feel free to change files according to your project needs.
 ```javascript
 import LiveSocket from "phoenix_live_view"
 import Socket from "phoenix"
-import AssetImport from "./assetImport"
+import AssetImport from "asset_import_hook"
 
 let liveSocket = new LiveSocket("/live", Socket, { AssetImport })
 liveSocket.connect()

@@ -63,9 +63,9 @@ Typical `asset_import` config:
 
 config :asset_import,
   assets_base_url: "/",
-  assets_path: File.cwd!() |> Path.join("assets"),
-  manifest_path: File.cwd!() |> Path.join("priv/static/manifest.json"),
-  entrypoints_path: File.cwd!() |> Path.join("assets/entrypoints.json")
+  assets_path: Path.expand("assets"),
+  manifest_path: Path.expand("priv/static/manifest.json"),
+  entrypoints_path: Path.expand("assets/entrypoints.json")
 ```
 
 Replace phoenix watcher from `webpack` to `nodemon`:

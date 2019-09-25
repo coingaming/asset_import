@@ -146,7 +146,7 @@ If more control is needed over the tags then `asset_style_files` and `asset_scri
 
 Feel free to change files according to your project needs.
 
-*The critical parts for `asset_import` to work are:*
+*Critical places for `asset_import` are:*
 
 1. `example_assets/package.json`:
   - dev dependency `webpack-manifest-plugin`

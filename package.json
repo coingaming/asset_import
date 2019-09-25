@@ -1,0 +1,27 @@
+{
+  "name": "asset_import",
+  "version": "0.1.0",
+  "description": "AssetImport Phoenix LiveView hook for dynamic asset loading",
+  "main": "assets/index.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/coingaming/asset_import.git"
+  },
+  "keywords": [
+    "elixir",
+    "webpack"
+  ],
+  "author": "Reio Piller",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/coingaming/asset_import/issues"
+  },
+  "homepage": "https://github.com/coingaming/asset_import#readme"
+}

@@ -1,0 +1,35 @@
+{
+  "repository": {},
+  "license": "UNLICENSED",
+  "scripts": {
+    "deploy": "webpack --mode production",
+    "watch": "nodemon"
+  },
+  "dependencies": {
+    "phoenix": "1.4.10",
+    "phoenix_html": "2.13.2",
+    "phoenix_live_view": "0.3.0",
+    "asset_import": "0.1.0"
+  },
+  "devDependencies": {
+    "@babel/core": "7.6.0",
+    "@babel/preset-env": "7.6.0",
+    "babel-loader": "8.0.6",
+    "clean-webpack-plugin": "3.0.0",
+    "copy-webpack-plugin": "5.0.4",
+    "css-loader": "3.2.0",
+    "exports-loader": "^0.7.0",
+    "file-loader": "4.2.0",
+    "imports-loader": "^0.8.0",
+    "mini-css-extract-plugin": "0.8.0",
+    "node-sass": "4.12.0",
+    "nodemon": "1.19.2",
+    "optimize-css-assets-webpack-plugin": "5.0.3",
+    "sass-loader": "8.0.0",
+    "uglifyjs-webpack-plugin": "2.2.0",
+    "url-loader": "2.1.0",
+    "webpack": "4.40.2",
+    "webpack-cli": "3.3.9",
+    "webpack-manifest-plugin": "2.0.4"
+  }
+}

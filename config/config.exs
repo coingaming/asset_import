@@ -1,5 +1,5 @@
 import Config
-File.cwd!()
+
 config :asset_import,
   assets_base_url: "/assets",
   assets_path: File.cwd!() |> Path.join("assets"),

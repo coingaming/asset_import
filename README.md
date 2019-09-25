@@ -130,13 +130,13 @@ If more control is needed over the tags then `asset_style_files` and `asset_scri
   <head>
     ..
     <%= for path <- asset_style_files() do %>
-      <link rel="stylesheet" href="#{path}" />
+      <link rel="stylesheet" href="<%= path %>" />
     <% end %>
   </head>
   <body>
     <%= body %>
     <%= for path <- asset_script_files() do %>
-      <script type="text/javascript" src="#{path}"></script>
+      <script type="text/javascript" src="<%= path %>"></script>
     <% end %>
   </body>
 </html>

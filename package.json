@@ -2,8 +2,8 @@
   "name": "asset_import",
   "version": "0.1.0",
   "description": "AssetImport Phoenix LiveView hook for dynamic asset loading",
-  "main": "assets/index.js",
-  "files": ["assets/index.js"],
+  "main": "index.js",
+  "files": ["index.js"],
   "directories": {
     "lib": "lib",
     "test": "test"

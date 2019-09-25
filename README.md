@@ -24,7 +24,7 @@ end
 ## Usage
 
 ```css
-/* assets/forms.css */
+/* assets/css/forms.css */
 
 form {
   /* a lot of form styling, or import bootstrap `_forms.scss` etc */
@@ -32,9 +32,9 @@ form {
 ```
 
 ```javascript
-// assets/login_form.js
+// assets/js/login_form.js
 
-import "./forms.css"
+import "../css/forms.css"
 
 // some login form specific javascript here
 ```
@@ -45,13 +45,13 @@ Anywhere in your views, templates, or LiveView renders:
   <%= if @logged_in do %>
     <div>My profile..</div>
   <% else %>
-    <%= asset_import "login_form" %>
+    <%= asset_import "js/login_form" %>
     <form>Login form..</form>
   <% end %>
 </div>
 ```
 
-Assets `login_form.js` and `forms.css` are only loaded when user is not logged in.
+Assets `js/login_form.js` and `css/forms.css` are only loaded when user is not logged in.
 
 ## Setup
 
@@ -62,7 +62,7 @@ Typical `asset_import` config:
 # config/config.exs
 
 config :asset_import,
-  assets_base_url: "/assets",
+  assets_base_url: "/",
   assets_path: File.cwd!() |> Path.join("assets"),
   manifest_path: File.cwd!() |> Path.join("priv/static/manifest.json"),
   entrypoints_path: File.cwd!() |> Path.join("assets/entrypoints.json")
@@ -177,16 +177,16 @@ Feel free to change files according to your project needs.
 31:  },
 32:  entry: entrypoints,
 33:  output: {
-34:    filename: '[id]-[contenthash].js',
-35:    chunkFilename: '[id]-[contenthash].js',
-36:    path: path.resolve(__dirname, '../priv/static/assets')
+34:    filename: 'js/[id]-[contenthash].js',
+35:    chunkFilename: 'js/[id]-[contenthash].js',
+36:    path: path.resolve(__dirname, '../priv/static')
 37:  },
 38:  plugins: [
 39:    new MiniCssExtractPlugin({
-40:      filename: '[id]-[contenthash].css',
-41:      chunkFilename: '[id]-[contenthash].css',
+40:      filename: 'css/[id]-[contenthash].css',
+41:      chunkFilename: 'css/[id]-[contenthash].css',
 42:    }),
-43:    new ManifestPlugin({ fileName: '../manifest.json' }),
+43:    new ManifestPlugin({ fileName: 'manifest.json' }),
 
 ..
 ```

@@ -30,16 +30,16 @@ module.exports = (env, options) => ({
   },
   entry: entrypoints,
   output: {
-    filename: '[id]-[contenthash].js',
-    chunkFilename: '[id]-[contenthash].js',
-    path: path.resolve(__dirname, '../priv/static/assets')
+    filename: 'js/[id]-[contenthash].js',
+    chunkFilename: 'js/[id]-[contenthash].js',
+    path: path.resolve(__dirname, '../priv/static')
   },
   plugins: [
     new MiniCssExtractPlugin({
-      filename: '[id]-[contenthash].css',
-      chunkFilename: '[id]-[contenthash].css',
+      filename: 'css/[id]-[contenthash].css',
+      chunkFilename: 'css/[id]-[contenthash].css',
     }),
-    new ManifestPlugin({ fileName: '../manifest.json' }),
+    new ManifestPlugin({ fileName: 'manifest.json' }),
     new CopyWebpackPlugin([{ from: 'static/', to: './' }]),
     new CleanWebpackPlugin()
   ],

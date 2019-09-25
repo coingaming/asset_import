@@ -25,7 +25,7 @@ The docs can be found at [https://hexdocs.pm/auto_assets](https://hexdocs.pm/aut
 
 ## Setup
 
-#### 1. Config:
+### 1. Config:
 
 Typical `asset_import` config:
 ```elixir
@@ -50,7 +50,7 @@ config :my_app, MyAppWeb.Endpoint,
 ```
 This is necessary for full webpack restart on `endpoints.json` change.
 
-#### 2. Create an assets module:
+### 2. Create an assets module:
 
 ```elixir
 defmodule MyAppWeb.Assets do
@@ -59,7 +59,7 @@ defmodule MyAppWeb.Assets do
 end
 ```
 
-#### 3. Use assets module in your view module or `MyAppWeb.ex` `:view` helper:
+### 3. Use assets module in your view module or `MyAppWeb.ex` `:view` helper:
 
 ```elixir
 defmodule MyAppWeb do
@@ -75,13 +75,11 @@ defmodule MyAppWeb do
 end
 ```
 
-#### 4. Add `render_scripts` and `render_styles` to your layout:
+### 4. Add `render_scripts` and `render_styles` to your layout:
+
+Body, which is where most of your `asset_import` will be, needs to be called before `asset_styles` and `asset_scripts`.
 
 ```html
-<!--
-  body, which is where most of your `asset_import` will be,
-  needs to be called before `asset_styles` and `asset_scripts`
--->
 <% body = render "body.html", assigns: assigns %>
 <html>
   <head>
@@ -95,7 +93,26 @@ end
 </html>
 ```
 
-#### 5. Setup assets: copy `example_assets/*` to your project assets folder.
+If more control is needed over the tags then `asset_style_files` and `asset_script_files` can be used, which return a list of asset paths instead of html:
+```html
+<% body = render "body.html", assigns: assigns %>
+<html>
+  <head>
+    ..
+    <%= for path <- asset_style_files() do %>
+      <link rel="stylesheet" href="#{path}" />
+    <% end %>
+  </head>
+  <body>
+    <%= body %>
+    <%= for path <- asset_script_files() do %>
+      <script type="text/javascript" src="#{path}"></script>
+    <% end %>
+  </body>
+</html>
+```
+
+### 5. Setup assets. Copy `example_assets/*` to your project assets folder.
 
 Feel free to change files according to your project needs.
 
@@ -103,7 +120,7 @@ Feel free to change files according to your project needs.
 
 1. `example_assets/package.json`:
   - dev dependency `webpack-manifest-plugin`
-  - dependency `asset_import` (only needed when you use dynamic rendering in LiveView's)
+  - dependency `asset_import` (Optional, only with LiveView)
 
 2. `example_assets/webpack.config.js`:
 ```javascript
@@ -144,9 +161,16 @@ Feel free to change files according to your project needs.
 ..
 ```
 
-#### 6. Optional: `import "asset_import"` to your main js.
+### 6. Optional, only with LiveView: Add `AssetImport` hook LiveView hooks.
 
-Only needed when you use dynamic rendering in LiveView's.
+```javascript
+import LiveSocket from "phoenix_live_view"
+import Socket from "phoenix"
+import AssetImport from "./assetImport"
+
+let liveSocket = new LiveSocket("/live", Socket, { AssetImport })
+liveSocket.connect()
+```
 
 ## Usage
 

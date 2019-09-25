@@ -21,7 +21,37 @@ def deps do
 end
 ```
 
-The docs can be found at [https://hexdocs.pm/auto_assets](https://hexdocs.pm/auto_assets).
+## Usage
+
+```css
+/* assets/forms.css */
+
+form {
+  /* a lot of form styling, or import bootstrap `_forms.scss` etc */
+}
+```
+
+```javascript
+// assets/login_form.js
+
+import "./forms.css"
+
+// some login form specific javascript here
+```
+
+Anywhere in your views, templates, or LiveView renders:
+```html
+<div>
+  <%= if @logged_in do %>
+    <div>My profile..</div>
+  <% else %>
+    <%= asset_import "login_form" %>
+    <form>Login form..</form>
+  <% end %>
+</div>
+```
+
+Assets `login_form.js` and `forms.css` are only loaded when user is not logged in.
 
 ## Setup
 
@@ -171,36 +201,3 @@ import AssetImport from "./assetImport"
 let liveSocket = new LiveSocket("/live", Socket, { AssetImport })
 liveSocket.connect()
 ```
-
-## Usage
-
-```css
-/* assets/forms.css */
-
-form {
-  /* a lot of form styling, or import bootstrap `_forms.scss` etc */
-}
-```
-
-```javascript
-// assets/login_form.js
-
-import "./forms.css"
-
-// some login form specific javascript here
-```
-
-Anywhere in your views, templates, or LiveView renders:
-```html
-<div>
-  <%= if @logged_in do %>
-    <div>My profile..</div>
-  <% else %>
-    <%= asset_import "login_form" %>
-    <form>Login form..</form>
-  <% end %>
-</div>
-```
-
-Assets `login_form.js` and `forms.css` are only loaded when user is not logged in.
-

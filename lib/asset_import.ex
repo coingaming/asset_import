@@ -1,4 +1,5 @@
 defmodule AssetImport do
+  @doc false
   require Logger
   import IO.ANSI
 

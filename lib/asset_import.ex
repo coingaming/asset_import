@@ -284,7 +284,7 @@ defmodule AssetImport do
     |> Enum.reduce(Map.new(), fn {key, file}, acc ->
       String.split(Path.basename(key, extension), "~")
       |> Enum.reduce(acc, fn name, acc ->
-        [order_str | _] = String.split(file, "-")
+        [order_str | _] = file |> Path.basename() |> String.split("-")
         {order, ""} = Integer.parse(order_str)
         Map.put(acc, name, [{order, Path.join(base_url, file)} | Map.get(acc, name, [])])
       end)
@@ -300,7 +300,7 @@ defmodule AssetImport do
       String.split(Path.basename(key, Path.extname(key)), "~")
       |> Enum.reduce(acc, fn
         ^asset_hash, acc ->
-          [order_str | _] = String.split(file, "-")
+          [order_str | _] = file |> Path.basename() |> String.split("-")
           {order, ""} = Integer.parse(order_str)
           [{order, Path.join(base_url, file)} | acc]
 

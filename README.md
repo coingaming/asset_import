@@ -118,7 +118,7 @@ Body, which is where most of your `asset_import` will be, needs to be called bef
   </head>
   <body>
     <%= body %>
-    <%= asset_scripts() %>>
+    <%= asset_scripts() %>
   </body>
 </html>
 ```

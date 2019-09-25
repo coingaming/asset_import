@@ -268,7 +268,7 @@ defmodule AssetImport do
         body
 
       {:error, _} ->
-        IO.warn("Asset manifest file (#{manifest_file}) not found. Build assets first.", [])
+        # IO.warn("Asset manifest file (#{manifest_file}) not found. Build assets first.", [])
         "{}"
     end
   end

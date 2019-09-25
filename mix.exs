@@ -1,14 +1,21 @@
 defmodule AssetImport.MixProject do
   use Mix.Project
 
+  @version "0.1.0"
+
   def project do
     [
       app: :asset_import,
-      version: "0.1.0",
+      version: @version,
       elixir: "~> 1.9",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      package: package(),
+      deps: deps(),
+      docs: docs(),
+      description: """
+      Webpack asset imports in Phoenix views/templates or LiveView's
+      """
     ]
   end
 
@@ -28,11 +35,30 @@ defmodule AssetImport.MixProject do
     [
       {:jason, "~> 1.1"},
       {:phoenix, "~> 1.4", only: :test},
-      {:phoenix_html, "~> 2.13", only: :test},
+      {:phoenix_html, "~> 2.13"},
       {:phoenix_live_view, "~> 0.3", only: :test},
       {:mix_test_watch, "~> 0.5", only: :dev, runtime: false},
       {:ex_unit_notifier, "~> 0.1", only: :test},
       {:floki, "~> 0.23.0", only: :test},
+      {:ex_doc, "~> 0.21", only: :dev, runtime: false},
+    ]
+  end
+
+  defp docs do
+    [
+      main: "readme",
+      extras: ["README.md"],
+      source_ref: "v#{@version}",
+      source_url: "https://github.com/coingaming/asset_import"
+    ]
+  end
+
+  defp package do
+    [
+      maintainers: ["Reio Piller"],
+      licenses: ["MIT"],
+      links: %{github: "https://github.com/coingaming/asset_import"},
+      files: ~w(lib priv LICENSE.md mix.exs README.md)
     ]
   end
 end

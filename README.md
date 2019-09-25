@@ -1,11 +1,11 @@
 # AssetImport
 
-Import assets directly from Elixir code.
+Webpack asset imports in Phoenix views/templates or LiveView's.
 
 ## Features
 - Only load assets that are actually used for current render.
 - Quarantees that nothing is over, under, double fetched.
-- Optimal asset packaging using webpack code spliting.
+- Optimal asset packaging and cacheability with webpack code spliting.
 - Supports Phoenix LiveView's by loading assets dynamically.
 - Mix dependencies that use `asset_import` are supported.
 
@@ -25,7 +25,7 @@ The docs can be found at [https://hexdocs.pm/auto_assets](https://hexdocs.pm/aut
 
 ## Setup
 
-### 1. Config:
+#### 1. Config:
 
 Typical `asset_import` config:
 ```elixir
@@ -50,7 +50,7 @@ config :my_app, MyAppWeb.Endpoint,
 ```
 This is necessary for full webpack restart on `endpoints.json` change.
 
-### 2. Create an assets module:
+#### 2. Create an assets module:
 
 ```elixir
 defmodule MyAppWeb.Assets do
@@ -59,7 +59,7 @@ defmodule MyAppWeb.Assets do
 end
 ```
 
-### 3. Use assets module in your view module or `MyAppWeb.ex` `:view` helper:
+#### 3. Use assets module in your view module or `MyAppWeb.ex` `:view` helper:
 
 ```elixir
 defmodule MyAppWeb do
@@ -75,10 +75,13 @@ defmodule MyAppWeb do
 end
 ```
 
-### 4. Add `render_scripts` and `render_styles` to your layout:
+#### 4. Add `render_scripts` and `render_styles` to your layout:
 
 ```html
-<!-- body, which is where most of your `asset_import` will be, needs to be called before `asset_styles` and `asset_scripts` -->
+<!--
+  body, which is where most of your `asset_import` will be,
+  needs to be called before `asset_styles` and `asset_scripts`
+-->
 <% body = render "body.html", assigns: assigns %>
 <html>
   <head>
@@ -92,7 +95,7 @@ end
 </html>
 ```
 
-### 5. Setup assets: copy `example_assets/*` to your project assets folder.
+#### 5. Setup assets: copy `example_assets/*` to your project assets folder.
 
 Feel free to change files according to your project needs.
 
@@ -141,17 +144,17 @@ Feel free to change files according to your project needs.
 ..
 ```
 
-### 6. Optional: `import "asset_import"` to your main js.
+#### 6. Optional: `import "asset_import"` to your main js.
 
 Only needed when you use dynamic rendering in LiveView's.
 
 ## Usage
 
 ```css
-// assets/forms.css
+/* assets/forms.css */
 
 form {
-  // a lot of form styling, or import bootstrap `_forms.scss` etc
+  /* a lot of form styling, or import bootstrap `_forms.scss` etc */
 }
 ```
 
@@ -175,5 +178,5 @@ Anywhere in your views, templates, or LiveView renders:
 </div>
 ```
 
-Assets `login_form.js` and `forms.css` only loaded when user is not logged in.
+Assets `login_form.js` and `forms.css` are only loaded when user is not logged in.
 

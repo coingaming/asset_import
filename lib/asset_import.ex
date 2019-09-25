@@ -112,6 +112,7 @@ defmodule AssetImport do
     end
   end
 
+  @doc false
   def render_scripts(scripts) do
     scripts
     |> Enum.map(&~s|<script type="text/javascript" src="#{&1}"></script>|)
@@ -119,6 +120,7 @@ defmodule AssetImport do
     |> Phoenix.HTML.raw()
   end
 
+  @doc false
   def render_styles(styles) do
     styles
     |> Enum.map(&~s|<link rel="stylesheet" type="text/css" href="#{&1}"/>|)
@@ -189,6 +191,7 @@ defmodule AssetImport do
     end
   end
 
+  @doc false
   def current_imports do
     Process.get(:asset_imports) || MapSet.new()
   end
@@ -210,6 +213,7 @@ defmodule AssetImport do
     |> String.slice(0..7)
   end
 
+  @doc false
   def get_modules() do
     compiling_modules =
       get_compiling_modules()
@@ -225,6 +229,7 @@ defmodule AssetImport do
     Agent.update(__MODULE__, &MapSet.put(&1, module))
   end
 
+  @doc false
   def get_compiling_modules do
     if Process.whereis(__MODULE__) do
       Agent.get(__MODULE__, & &1)
@@ -233,9 +238,7 @@ defmodule AssetImport do
     end
   end
 
-  @doc """
-  Returns all compiled modules in a project.
-  """
+  @doc false
   def get_compiled_modules do
     Mix.Project.compile_path()
     |> Path.join("*.beam")
@@ -253,6 +256,7 @@ defmodule AssetImport do
     |> :erlang.md5()
   end
 
+  @doc false
   def read_manifest do
     manifest_file = config(:manifest_path)
 
@@ -286,6 +290,7 @@ defmodule AssetImport do
     end)
   end
 
+  @doc false
   def manifest_assets_by_hash(manifest, asset_hash) do
     base_url = config(:assets_base_url)
 

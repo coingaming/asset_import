@@ -14,7 +14,7 @@ defmodule AssetImport.MixProject do
       deps: deps(),
       docs: docs(),
       description: """
-      Webpack asset imports in Phoenix views/templates or LiveView's
+      Webpack asset imports in Elixir code. For example Phoenix controllers/views/templates or LiveView's.
       """
     ]
   end

@@ -142,7 +142,7 @@ If more control is needed over the tags then `asset_style_files` and `asset_scri
 </html>
 ```
 
-### 5. Add `AssetImport` hook LiveView hooks (optional only for LiveView)
+### 5. Add `AssetImport` hook to LiveView hooks (optional only for LiveView)
 
 ```javascript
 import LiveSocket from "phoenix_live_view"

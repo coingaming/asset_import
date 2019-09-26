@@ -16,7 +16,7 @@ The package can be installed by adding `asset_import` to your list of dependenci
 ```elixir
 def deps do
   [
-    {:asset_import, "~> 0.2.1"}
+    {:asset_import, "~> 0.2.2"}
   ]
 end
 ```
@@ -206,7 +206,7 @@ Copy `example_assets/*` to your project assets or adjust existing files:
     ..
     "dependencies": {
       ..
-      "asset_import_hook": "0.2.1" // only when LiveView is used
+      "asset_import_hook": "0.2.2" // only when LiveView is used
       ..
     },
     "devDependencies": {

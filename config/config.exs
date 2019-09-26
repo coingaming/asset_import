@@ -9,3 +9,5 @@ config :asset_import,
 config :phoenix,
   json_library: Jason,
   template_engines: [leex: Phoenix.LiveView.Engine]
+
+import_config "#{Mix.env()}.exs"

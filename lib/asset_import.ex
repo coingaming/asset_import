@@ -81,6 +81,8 @@ defmodule AssetImport do
         Module.put_attribute(__CALLER__.module, :asset_imports, Map.new())
 
         quote do
+          AssetImport.put_compiling_module(__MODULE__)
+
           import unquote(__MODULE__)
           import unquote(__MODULE__).Files, except: [__phoenix_recompile__?: 0]
 
@@ -136,7 +138,7 @@ defmodule AssetImport do
         :ok
 
       _ ->
-        # Logger.info("Writing assets endpoints (#{content |> String.length()}B)")
+        # IO.warn("Writing assets endpoints (#{content |> String.length()}B)")
         :ok = File.write(file_path, content)
     end
   end
@@ -193,7 +195,6 @@ defmodule AssetImport do
           Path.join(".", file)
       end
 
-    put_compiling_module(module)
     current_asset_imports = Module.get_attribute(module, :asset_imports) || Map.new()
     asset_hash = hash(rel_path)
     new_imports = Map.put(current_asset_imports, asset_hash, rel_path)
@@ -279,7 +280,8 @@ defmodule AssetImport do
     |> MapSet.new()
   end
 
-  defp put_compiling_module(module) do
+  @doc false
+  def put_compiling_module(module) do
     Agent.start(fn -> MapSet.new() end, name: __MODULE__)
     Agent.update(__MODULE__, &MapSet.put(&1, module))
   end

@@ -89,7 +89,7 @@ defmodule MyAppWeb.Assets do
 end
 ```
 
-### 3. Use assets module in your view module or `MyAppWeb.ex` `:view` helper:
+### 3. Use assets module in your web module (or to anywhere else where you use imports):
 
 ```elixir
 defmodule MyAppWeb do

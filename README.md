@@ -4,7 +4,7 @@ Webpack asset imports directly in Elixir code. For example in Phoenix controller
 
 ## Features
 - Only load assets that are actually used for current render.
-- Quarantees that nothing is over, under, or double fetched.
+- Guarantees that nothing is over, under, or double fetched.
 - Optimal asset packaging and cacheability with webpack code splitting.
 - Supports Phoenix LiveView's by loading assets dynamically.
 - Supports mix dependencies that are using `asset_import`.

@@ -111,10 +111,10 @@ end
 
 ### 4. Add scripts and styles to layout
 
-Body, which is where most of your `asset_import` will be, needs to be called before scripts and styles.
-
 ```html
+<!-- Content rendering has to execute before scripts and styles -->
 <% body = render "body.html", assigns %>
+
 <html>
   <head>
     
@@ -136,12 +136,15 @@ Body, which is where most of your `asset_import` will be, needs to be called bef
 </html>
 ```
 
-If more control is needed over the tags:
+Or
 ```html
+<!-- Content rendering has to execute before scripts and styles -->
 <% body = render "body.html", assigns %>
+
 <html>
   <head>
     
+
     <!-- Styles for current page (render blocking) -->
     <%= for path <- asset_style_files() do %>
       <link rel="stylesheet" href="<%= path %>" />

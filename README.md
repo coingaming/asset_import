@@ -142,7 +142,7 @@ If more control is needed over the tags then `asset_style_files` and `asset_scri
 </html>
 ```
 
-### 5. Optional, only for LiveView: Add `AssetImport` hook LiveView hooks.
+### 5. Add `AssetImport` hook LiveView hooks (optional only for LiveView)
 
 ```javascript
 import LiveSocket from "phoenix_live_view"
@@ -161,7 +161,7 @@ Feel free to change files according to your project needs.
 
 1. `example_assets/package.json`:
   - dev dependency `webpack-manifest-plugin`, `nodemon`
-  - dependency `asset_import_hook` (Optional, only for LiveView)
+  - dependency `asset_import_hook` (optional only for LiveView)
 
 2. `example_assets/webpack.config.js`:
 ```javascript

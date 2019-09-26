@@ -4,7 +4,7 @@ Webpack asset imports directly in Elixir code. For example in Phoenix controller
 
 ## Features
 - Only load assets that are actually used for current render.
-- Guarantees that nothing is over, under, or double fetched.
+- Helps to avoid assets over, under, or double fetching.
 - Optimal asset packaging and cacheability with webpack code splitting.
 - Supports Phoenix LiveView's by loading assets dynamically.
 - Supports mix dependencies that are using `asset_import`.
@@ -16,7 +16,7 @@ The package can be installed by adding `asset_import` to your list of dependenci
 ```elixir
 def deps do
   [
-    {:asset_import, "~> 0.1.0"}
+    {:asset_import, "~> 0.2.0"}
   ]
 end
 ```
@@ -117,12 +117,21 @@ Body, which is where most of your `asset_import` will be, needs to be called bef
 <% body = render "body.html", assigns %>
 <html>
   <head>
-    ..
+    
+    <!-- Style tags needed for styles in current page (render blocking) -->
     <%= asset_styles() %>
+
+    <!-- Optional: You can preload unused styles and scripts -->
+    <%= preload_asset_styles() %>
+    <%= preload_asset_scripts() %>
+
   </head>
   <body>
     <%= body %>
+
+    <!-- Script tags for scripts in current page -->
     <%= asset_scripts() %>
+
   </body>
 </html>
 ```
@@ -132,16 +141,29 @@ If more control is needed over the tags then `asset_style_files` and `asset_scri
 <% body = render "body.html", assigns %>
 <html>
   <head>
-    ..
+    
+    <!-- Style tags needed for styles in current page (render blocking) -->
     <%= for path <- asset_style_files() do %>
       <link rel="stylesheet" href="<%= path %>" />
     <% end %>
+
+    <!-- Optional: You can preload unused styles and scripts -->
+    <%= for path <- unused_asset_style_files() do %>
+      <link rel="preload" href="<%= path %>" as="style">
+    <% end %>
+    <%= for path <- unused_asset_script_files() do %>
+      <link rel="preload" href="<%= path %>" as="script">
+    <% end %>
+
   </head>
   <body>
     <%= body %>
+
+    <!-- Script tags for scripts in current page -->
     <%= for path <- asset_script_files() do %>
       <script type="text/javascript" src="<%= path %>"></script>
     <% end %>
+
   </body>
 </html>
 ```
@@ -175,7 +197,7 @@ Copy `example_assets/*` to your project assets folder or adjust you existing fil
     ..
     "dependencies": {
       ..
-      "asset_import_hook": "0.1.0" // only needed for LiveView's
+      "asset_import_hook": "0.2.0" // only needed for LiveView's
       ..
     },
     "devDependencies": {

@@ -9,7 +9,28 @@ defmodule AssetImport do
     quote do
       defmodule Files do
         @manifest AssetImport.read_manifest() |> Jason.decode!()
-        @registered_imports AssetImport.registered_imports()
+
+        defmacro unused_asset_script_files do
+          manifest =
+            @manifest
+            |> AssetImport.manifest_assets_by_extension(".js")
+            |> Macro.escape()
+
+          quote do
+            AssetImport.unused_imports(unquote(manifest))
+          end
+        end
+
+        defmacro unused_asset_style_files do
+          manifest =
+            @manifest
+            |> AssetImport.manifest_assets_by_extension(".css")
+            |> Macro.escape()
+
+          quote do
+            AssetImport.unused_imports(unquote(manifest))
+          end
+        end
 
         defmacro asset_script_files do
           manifest =
@@ -18,19 +39,27 @@ defmodule AssetImport do
             |> Macro.escape()
 
           quote do
-            AssetImport.imports(unquote(manifest), unquote(@registered_imports |> Macro.escape()))
+            AssetImport.used_imports(unquote(manifest))
           end
         end
 
-        defmacro asset_style_files(opts \\ [preload: true]) do
+        defmacro asset_style_files do
           manifest =
             @manifest
             |> AssetImport.manifest_assets_by_extension(".css")
             |> Macro.escape()
 
           quote do
-            AssetImport.imports(unquote(manifest), unquote(@registered_imports |> Macro.escape()))
+            AssetImport.used_imports(unquote(manifest))
           end
+        end
+
+        def preload_asset_scripts do
+          AssetImport.render_preloads(unused_asset_script_files(), as: "script")
+        end
+
+        def preload_asset_styles do
+          AssetImport.render_preloads(unused_asset_style_files(), as: "style")
         end
 
         def asset_scripts do
@@ -53,9 +82,7 @@ defmodule AssetImport do
 
         quote do
           import unquote(__MODULE__)
-
-          import unquote(__MODULE__).Files,
-            only: [asset_script_files: 0, asset_style_files: 0, asset_scripts: 0, asset_styles: 0]
+          import unquote(__MODULE__).Files, except: [__phoenix_recompile__?: 0]
 
           @before_compile AssetImport
           @after_compile AssetImport
@@ -112,6 +139,14 @@ defmodule AssetImport do
         # Logger.info("Writing assets endpoints (#{content |> String.length()}B)")
         :ok = File.write(file_path, content)
     end
+  end
+
+  @doc false
+  def render_preloads(files, as: as) do
+    files
+    |> Enum.map(&~s|<link rel="preload" href="#{&1}" as="#{as}">|)
+    |> Enum.join("")
+    |> Phoenix.HTML.raw()
   end
 
   @doc false
@@ -179,9 +214,9 @@ defmodule AssetImport do
 
     files =
       imports
-        |> Enum.sort()
-        |> Enum.map(fn {_, file} -> file end)
-        |> Enum.join(" ")
+      |> Enum.sort()
+      |> Enum.map(fn {_, file} -> file end)
+      |> Enum.join(" ")
 
     case files do
       "" ->
@@ -199,20 +234,28 @@ defmodule AssetImport do
   end
 
   @doc false
-  def imports(manifest, _registered_imports) do
-    # registered_imports
-    # |> Map.keys()
-    # |> MapSet.new()
-    # |> MapSet.put("runtime")
-    # |> Enum.reduce([], &(&2 ++ Map.get(manifest, &1, [])))
-    # |> Enum.sort()
-    # |> Enum.map(fn {_, file} -> file end)
-    # |> IO.inspect()
-
+  def used_imports(manifest) do
     current_imports()
-    # |> IO.inspect()
     |> MapSet.put("runtime")
     |> Enum.reduce([], &(&2 ++ Map.get(manifest, &1, [])))
+    |> Enum.sort()
+    |> Enum.map(fn {_, file} -> file end)
+  end
+
+  @doc false
+  def unused_imports(manifest) do
+    used_files =
+      current_imports()
+      |> MapSet.put("runtime")
+      |> Enum.reduce(MapSet.new(), &MapSet.union(&2, manifest |> Map.get(&1, []) |> MapSet.new()))
+
+    all_files =
+      Enum.reduce(manifest, MapSet.new(), fn {_, files}, acc ->
+        MapSet.union(acc, MapSet.new(files))
+      end)
+
+    all_files
+    |> MapSet.difference(used_files)
     |> Enum.sort()
     |> Enum.map(fn {_, file} -> file end)
   end

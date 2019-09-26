@@ -199,18 +199,18 @@ defmodule AssetImport do
   end
 
   @doc false
-  def imports(manifest, registered_imports) do
-    registered_imports
-    |> Map.keys()
-    |> MapSet.new()
-    |> MapSet.put("runtime")
-    |> Enum.reduce([], &(&2 ++ Map.get(manifest, &1, [])))
-    |> Enum.sort()
-    |> Enum.map(fn {_, file} -> file end)
-    |> IO.inspect()
+  def imports(manifest, _registered_imports) do
+    # registered_imports
+    # |> Map.keys()
+    # |> MapSet.new()
+    # |> MapSet.put("runtime")
+    # |> Enum.reduce([], &(&2 ++ Map.get(manifest, &1, [])))
+    # |> Enum.sort()
+    # |> Enum.map(fn {_, file} -> file end)
+    # |> IO.inspect()
 
     current_imports()
-    |> IO.inspect()
+    # |> IO.inspect()
     |> MapSet.put("runtime")
     |> Enum.reduce([], &(&2 ++ Map.get(manifest, &1, [])))
     |> Enum.sort()

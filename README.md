@@ -45,6 +45,10 @@ Anywhere in your views, templates, or LiveView renders:
   <%= if @logged_in do %>
     <div>My profile..</div>
   <% else %>
+    <!--
+    You can use <% asset_import "js/login_form" %> (without =),
+    if you are not using this template in LiveView. It will save some bytes from your html.
+    -->
     <%= asset_import "js/login_form" %>
     <form>Login form..</form>
   <% end %>

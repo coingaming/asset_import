@@ -55,7 +55,7 @@ Assets `js/login_form.js` and `css/forms.css` are only loaded when user is not l
 
 ## Setup
 
-### 1. Config:
+### 1. Add configuration
 
 Typical `asset_import` config:
 ```elixir
@@ -80,7 +80,7 @@ config :my_app, MyAppWeb.Endpoint,
 ```
 This is necessary for full webpack restart on `endpoints.json` change.
 
-### 2. Create an assets module:
+### 2. Create an assets module
 
 ```elixir
 defmodule MyAppWeb.Assets do
@@ -89,7 +89,7 @@ defmodule MyAppWeb.Assets do
 end
 ```
 
-### 3. Use your assets module in web module:
+### 3. Use your assets module in web module
 
 ```elixir
 defmodule MyAppWeb do
@@ -105,7 +105,7 @@ defmodule MyAppWeb do
 end
 ```
 
-### 4. Add scripts and styles to your layout:
+### 4. Add scripts and styles to layout
 
 Body, which is where most of your `asset_import` will be, needs to be called before `asset_styles` and `asset_scripts`.
 
@@ -142,7 +142,18 @@ If more control is needed over the tags then `asset_style_files` and `asset_scri
 </html>
 ```
 
-### 5. Setup assets. Copy `example_assets/*` to your project assets folder.
+### 5. Optional, only for LiveView: Add `AssetImport` hook LiveView hooks.
+
+```javascript
+import LiveSocket from "phoenix_live_view"
+import Socket from "phoenix"
+import AssetImport from "asset_import_hook"
+
+let liveSocket = new LiveSocket("/live", Socket, { AssetImport })
+liveSocket.connect()
+```
+
+### 6. Copy `example_assets/*` to your project assets folder
 
 Feel free to change files according to your project needs.
 
@@ -150,7 +161,7 @@ Feel free to change files according to your project needs.
 
 1. `example_assets/package.json`:
   - dev dependency `webpack-manifest-plugin`, `nodemon`
-  - dependency `asset_import_hook` (Optional, only with LiveView)
+  - dependency `asset_import_hook` (Optional, only for LiveView)
 
 2. `example_assets/webpack.config.js`:
 ```javascript
@@ -189,15 +200,4 @@ Feel free to change files according to your project needs.
 43:    new ManifestPlugin({ fileName: 'manifest.json' }),
 
 ..
-```
-
-### 6. Optional, only with LiveView: Add `AssetImport` hook LiveView hooks.
-
-```javascript
-import LiveSocket from "phoenix_live_view"
-import Socket from "phoenix"
-import AssetImport from "asset_import_hook"
-
-let liveSocket = new LiveSocket("/live", Socket, { AssetImport })
-liveSocket.connect()
 ```

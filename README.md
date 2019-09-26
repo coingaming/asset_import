@@ -110,7 +110,7 @@ end
 Body, which is where most of your `asset_import` will be, needs to be called before `asset_styles` and `asset_scripts`.
 
 ```html
-<% body = render "body.html", assigns: assigns %>
+<% body = render "body.html", assigns %>
 <html>
   <head>
     ..
@@ -125,7 +125,7 @@ Body, which is where most of your `asset_import` will be, needs to be called bef
 
 If more control is needed over the tags then `asset_style_files` and `asset_script_files` can be used, which return a list of asset paths instead of html:
 ```html
-<% body = render "body.html", assigns: assigns %>
+<% body = render "body.html", assigns %>
 <html>
   <head>
     ..

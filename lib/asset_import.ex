@@ -120,26 +120,28 @@ defmodule AssetImport do
 
   @doc false
   def __after_compile__(_env, _bytecode) do
-    # run in agent to avoid race conditions
-    Agent.start(fn -> nil end, name: :asset_import_writer)
-
-    Agent.update(:asset_import_writer, fn nil ->
-      write_entrypoints()
-      nil
-    end)
+    case registered_imports() do
+      {:ok, imports} ->
+        write_entrypoints(imports)
+      error ->
+        error
+    end
   end
 
-  defp write_entrypoints() do
-    content = Jason.encode!(AssetImport.registered_imports(), pretty: true)
-    file_path = config(:entrypoints_path)
-
-    case File.read(file_path) do
-      {:ok, ^content} ->
+  defp write_entrypoints(imports) do
+    content = Jason.encode!(imports, pretty: true)
+    case config(:entrypoints_path) do
+      :disabled ->
         :ok
 
-      _ ->
-        # IO.warn("Writing assets endpoints (#{content |> String.length()}B)")
-        :ok = File.write(file_path, content)
+      file_path ->
+        case File.read(file_path) do
+          {:ok, ^content} ->
+            :ok
+
+          {:ok, _} ->
+            File.write(file_path, content)
+        end
     end
   end
 
@@ -204,8 +206,13 @@ defmodule AssetImport do
 
   @doc false
   def registered_imports() do
-    get_modules()
-    |> Enum.reduce(Map.new(), &Map.merge(&2, &1.__asset_imports__()))
+    case get_modules() do
+      {:ok, modules} ->
+        {:ok, modules
+        |> Enum.reduce(Map.new(), &Map.merge(&2, &1.__asset_imports__()))}
+      error ->
+        error
+    end
   end
 
   @doc false
@@ -275,9 +282,13 @@ defmodule AssetImport do
       get_compiling_modules()
       |> MapSet.to_list()
 
-    (compiling_modules ++ get_compiled_modules())
-    |> Stream.filter(&(Code.ensure_loaded?(&1) and function_exported?(&1, :__asset_imports__, 0)))
-    |> MapSet.new()
+    if Enum.all?(compiling_modules, &Code.ensure_loaded?/1) do
+      {:ok, (compiling_modules ++ get_compiled_modules())
+      |> Enum.filter(&(Code.ensure_loaded?(&1) and function_exported?(&1, :__asset_imports__, 0)))
+      |> MapSet.new()}
+    else
+      {:error, :still_compiling}
+    end
   end
 
   @doc false

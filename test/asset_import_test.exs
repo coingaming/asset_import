@@ -123,7 +123,7 @@ defmodule AssetImportTest do
         Map.put(acc, hash(file), file)
       end)
 
-    assert expected_assets == AssetImport.registered_imports()
+    assert {:ok, expected_assets} == AssetImport.registered_imports()
   end
 
   defp name_to_file(name) do

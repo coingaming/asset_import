@@ -59,7 +59,7 @@ Assets `js/login_form.js` and `css/forms.css` are only loaded when user is not l
 
 ## Setup
 
-### 1. Add configuration
+### 1. Configuration
 
 Typical `asset_import` config:
 ```elixir
@@ -82,7 +82,13 @@ config :my_app, MyAppWeb.Endpoint,
   check_origin: false,
   watchers: [node: ["node_modules/nodemon/bin/nodemon.js", cd: Path.expand("../assets", __DIR__)]]
 ```
-This is necessary for full webpack restart on `endpoints.json` change.
+
+Disable entrypoints file generation in test.
+```elixir
+# config/test.exs
+
+config :asset_import, entrypoints_path: :disabled
+```
 
 ### 2. Create an assets module
 
@@ -182,7 +188,7 @@ let liveSocket = new LiveSocket("/live", Socket, { AssetImport })
 liveSocket.connect()
 ```
 
-### 6. Setup Webpack
+### 6. Webpack setup
 
 Copy `example_assets/*` to your project assets or adjust existing files:
 

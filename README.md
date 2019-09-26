@@ -118,10 +118,10 @@ Body, which is where most of your `asset_import` will be, needs to be called bef
 <html>
   <head>
     
-    <!-- Style tags needed for styles in current page (render blocking) -->
+    <!-- Styles for current page (render blocking) -->
     <%= asset_styles() %>
 
-    <!-- Optional: You can preload unused styles and scripts -->
+    <!-- Optional: Preload unused styles and scripts -->
     <%= preload_asset_styles() %>
     <%= preload_asset_scripts() %>
 
@@ -129,7 +129,7 @@ Body, which is where most of your `asset_import` will be, needs to be called bef
   <body>
     <%= body %>
 
-    <!-- Script tags for scripts in current page -->
+    <!-- Script for current page -->
     <%= asset_scripts() %>
 
   </body>
@@ -142,12 +142,12 @@ If more control is needed over the tags then `asset_style_files` and `asset_scri
 <html>
   <head>
     
-    <!-- Style tags needed for styles in current page (render blocking) -->
+    <!-- Styles for current page (render blocking) -->
     <%= for path <- asset_style_files() do %>
       <link rel="stylesheet" href="<%= path %>" />
     <% end %>
 
-    <!-- Optional: You can preload unused styles and scripts -->
+    <!-- Optional: Preload unused styles and scripts -->
     <%= for path <- unused_asset_style_files() do %>
       <link rel="preload" href="<%= path %>" as="style">
     <% end %>
@@ -159,7 +159,7 @@ If more control is needed over the tags then `asset_style_files` and `asset_scri
   <body>
     <%= body %>
 
-    <!-- Script tags for scripts in current page -->
+    <!-- Script for current page -->
     <%= for path <- asset_script_files() do %>
       <script type="text/javascript" src="<%= path %>"></script>
     <% end %>
@@ -168,7 +168,7 @@ If more control is needed over the tags then `asset_style_files` and `asset_scri
 </html>
 ```
 
-### 5. Add `AssetImport` hook to LiveView hooks (only needed for LiveView's)
+### 5. Add LiveView hook (only when LiveView is used)
 
 ```javascript
 import LiveSocket from "phoenix_live_view"
@@ -197,7 +197,7 @@ Copy `example_assets/*` to your project assets folder or adjust you existing fil
     ..
     "dependencies": {
       ..
-      "asset_import_hook": "0.2.0" // only needed for LiveView's
+      "asset_import_hook": "0.2.0" // only when LiveView is used
       ..
     },
     "devDependencies": {

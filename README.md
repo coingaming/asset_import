@@ -11,7 +11,7 @@ Webpack asset imports in Phoenix views/templates or LiveView's.
 
 ## Installation
 
-The package can be installed by adding `auto_assets` to your list of dependencies in `mix.exs`:
+The package can be installed by adding `asset_import` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do

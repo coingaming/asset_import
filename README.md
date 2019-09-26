@@ -190,7 +190,7 @@ liveSocket.connect()
 
 ### 6. Webpack setup
 
-Copy `example_assets/*` to your project assets or adjust existing files:
+Copy `example_assets/*` to your project assets or adjust existing files manually:
 
 - ```javascript
   // assets/nodemon.json

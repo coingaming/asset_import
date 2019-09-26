@@ -67,7 +67,7 @@ module.exports = (env, options) => ({
     })
   ],
   stats: {
-    warnings: env.mode === 'production'
+    warnings: false
   },
   module: {
     rules: [

@@ -9,6 +9,7 @@ defmodule AssetImport do
     quote do
       defmodule Files do
         @manifest AssetImport.read_manifest() |> Jason.decode!()
+        @registered_imports AssetImport.registered_imports()
 
         defmacro asset_script_files do
           manifest =
@@ -17,18 +18,18 @@ defmodule AssetImport do
             |> Macro.escape()
 
           quote do
-            AssetImport.imports(unquote(manifest))
+            AssetImport.imports(unquote(manifest), unquote(@registered_imports |> Macro.escape()))
           end
         end
 
-        defmacro asset_style_files do
+        defmacro asset_style_files(opts \\ [preload: true]) do
           manifest =
             @manifest
             |> AssetImport.manifest_assets_by_extension(".css")
             |> Macro.escape()
 
           quote do
-            AssetImport.imports(unquote(manifest))
+            AssetImport.imports(unquote(manifest), unquote(@registered_imports |> Macro.escape()))
           end
         end
 
@@ -198,8 +199,18 @@ defmodule AssetImport do
   end
 
   @doc false
-  def imports(manifest) do
+  def imports(manifest, registered_imports) do
+    registered_imports
+    |> Map.keys()
+    |> MapSet.new()
+    |> MapSet.put("runtime")
+    |> Enum.reduce([], &(&2 ++ Map.get(manifest, &1, [])))
+    |> Enum.sort()
+    |> Enum.map(fn {_, file} -> file end)
+    |> IO.inspect()
+
     current_imports()
+    |> IO.inspect()
     |> MapSet.put("runtime")
     |> Enum.reduce([], &(&2 ++ Map.get(manifest, &1, [])))
     |> Enum.sort()

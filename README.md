@@ -146,7 +146,7 @@ If more control is needed over the tags then `asset_style_files` and `asset_scri
 </html>
 ```
 
-### 5. Add `AssetImport` hook to LiveView hooks (optional only for LiveView)
+### 5. Add `AssetImport` hook to LiveView hooks (only needed for LiveView's)
 
 ```javascript
 import LiveSocket from "phoenix_live_view"
@@ -157,51 +157,71 @@ let liveSocket = new LiveSocket("/live", Socket, { AssetImport })
 liveSocket.connect()
 ```
 
-### 6. Copy `example_assets/*` to your project assets folder
+### 6. Setup Webpack
 
-Feel free to change files according to your project needs.
+Copy `example_assets/*` to your project assets folder or adjust you existing files:
 
-*Critical places for `asset_import` are:*
+- ```javascript
+  // assets/nodemon.json
+  {
+    "watch": ["entrypoints.json", "webpack.config.js"],
+    "exec": "node_modules/webpack/bin/webpack.js --color --mode development --watch-stdin"
+  }
+  ```
 
-1. `example_assets/package.json`:
-  - dev dependency `webpack-manifest-plugin`, `nodemon`
-  - dependency `asset_import_hook` (optional only for LiveView)
+- ```javascript
+  // assets/package.json
+  {
+    ..
+    "dependencies": {
+      ..
+      "asset_import_hook": "0.1.0" // only needed for LiveView's
+      ..
+    },
+    "devDependencies": {
+      ..
+      "nodemon": "1.19.2",
+      "uglifyjs-webpack-plugin": "2.2.0",
+      ..
+    }
+  }
+  ```
 
-2. `example_assets/webpack.config.js`:
-```javascript
-..
+- ```javascript
+  // assets/webpack.config.js
+  ..
 
- 8: const entrypoints = require('./entrypoints.json') || {};
- 9:
-10: if (Object.keys(entrypoints).length === 0) {
-11:   console.log('No entrypoints');
-12:   process.exit();
-13:   return;
-14: }
+  8: const entrypoints = require('./entrypoints.json') || {};
+  9:
+  10: if (Object.keys(entrypoints).length === 0) {
+  11:   console.log('No entrypoints');
+  12:   process.exit();
+  13:   return;
+  14: }
 
-..
+  ..
 
-23:    runtimeChunk: 'single',
-24:    chunkIds: 'natural',
-25:    concatenateModules: true,
-26:    splitChunks: {
-27:      chunks: 'all',
-28:      minChunks: 1,
-29:      minSize: 0
-30:    }
-31:  },
-32:  entry: entrypoints,
-33:  output: {
-34:    filename: 'js/[id]-[contenthash].js',
-35:    chunkFilename: 'js/[id]-[contenthash].js',
-36:    path: path.resolve(__dirname, '../priv/static')
-37:  },
-38:  plugins: [
-39:    new MiniCssExtractPlugin({
-40:      filename: 'css/[id]-[contenthash].css',
-41:      chunkFilename: 'css/[id]-[contenthash].css',
-42:    }),
-43:    new ManifestPlugin({ fileName: 'manifest.json' }),
+  23:    runtimeChunk: 'single',
+  24:    chunkIds: 'natural',
+  25:    concatenateModules: true,
+  26:    splitChunks: {
+  27:      chunks: 'all',
+  28:      minChunks: 1,
+  29:      minSize: 0
+  30:    }
+  31:  },
+  32:  entry: entrypoints,
+  33:  output: {
+  34:    filename: 'js/[id]-[contenthash].js',
+  35:    chunkFilename: 'js/[id]-[contenthash].js',
+  36:    path: path.resolve(__dirname, '../priv/static')
+  37:  },
+  38:  plugins: [
+  39:    new MiniCssExtractPlugin({
+  40:      filename: 'css/[id]-[contenthash].css',
+  41:      chunkFilename: 'css/[id]-[contenthash].css',
+  42:    }),
+  43:    new ManifestPlugin({ fileName: 'manifest.json' }),
 
-..
-```
+  ..
+  ```

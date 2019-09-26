@@ -149,7 +149,7 @@ Feel free to change files according to your project needs.
 *Critical places for `asset_import` are:*
 
 1. `example_assets/package.json`:
-  - dev dependency `webpack-manifest-plugin`
+  - dev dependency `webpack-manifest-plugin`, `nodemon`
   - dependency `asset_import_hook` (Optional, only with LiveView)
 
 2. `example_assets/webpack.config.js`:

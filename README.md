@@ -1,6 +1,6 @@
 # AssetImport
 
-Webpack asset imports in Phoenix views/templates or LiveView's.
+Webpack asset imports directly in Elixir code. For example in Phoenix controllers/views/templates or LiveView's.
 
 ## Features
 - Only load assets that are actually used for current render.

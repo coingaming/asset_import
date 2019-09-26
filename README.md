@@ -105,7 +105,7 @@ defmodule MyAppWeb do
 end
 ```
 
-### 4. Add `render_scripts` and `render_styles` to your layout:
+### 4. Add scripts and styles to your layout:
 
 Body, which is where most of your `asset_import` will be, needs to be called before `asset_styles` and `asset_scripts`.
 

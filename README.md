@@ -111,7 +111,7 @@ end
 
 ### 4. Add scripts and styles to layout
 
-Body, which is where most of your `asset_import` will be, needs to be called before `asset_styles` and `asset_scripts`.
+Body, which is where most of your `asset_import` will be, needs to be called before scripts and styles.
 
 ```html
 <% body = render "body.html", assigns %>
@@ -136,7 +136,7 @@ Body, which is where most of your `asset_import` will be, needs to be called bef
 </html>
 ```
 
-If more control is needed over the tags then `asset_style_files` and `asset_script_files` can be used, which return a list of asset paths instead of html:
+If more control is needed over the tags:
 ```html
 <% body = render "body.html", assigns %>
 <html>

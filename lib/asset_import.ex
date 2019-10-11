@@ -139,7 +139,7 @@ defmodule AssetImport do
           {:ok, ^content} ->
             :ok
 
-          {:ok, _} ->
+          _ ->
             File.write(file_path, content)
         end
     end

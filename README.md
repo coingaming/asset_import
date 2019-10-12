@@ -3,9 +3,9 @@
 Webpack asset imports directly in Elixir code. For example in Phoenix controllers/views/templates or LiveView's.
 
 ## Features
-- Only load assets that are actually used for current render.
+- Only load assets that are used for current render.
 - Helps to avoid assets over, under, or double fetching.
-- Optimal asset packaging and cacheability with webpack code splitting.
+- Optimal asset packaging and cache reuse with Webpack code splitting.
 - Supports Phoenix LiveView's by loading assets dynamically.
 - Supports mix dependencies that are using `asset_import`.
 
@@ -135,7 +135,7 @@ end
   <body>
     <%= body %>
 
-    <!-- Script for current page -->
+    <!-- Scripts for current page -->
     <%= asset_scripts() %>
 
   </body>
@@ -168,7 +168,7 @@ Or
   <body>
     <%= body %>
 
-    <!-- Script for current page -->
+    <!-- Scripts for current page -->
     <%= for path <- asset_script_files() do %>
       <script type="text/javascript" src="<%= path %>"></script>
     <% end %>

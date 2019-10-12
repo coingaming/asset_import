@@ -8,7 +8,7 @@ defmodule AssetImportTest do
   # alias Phoenix.LiveView
   # alias Phoenix.LiveViewTest.DOM
   alias AssetImportTest.Endpoint
-  #, ClockLive, ClockControlsLive}
+  # , ClockLive, ClockControlsLive}
 
   @endpoint Endpoint
   @moduletag :capture_log
@@ -70,7 +70,6 @@ defmodule AssetImportTest do
   end
 
   describe "live view" do
-
     @tag session: %{nest: []}
     test "static render", %{conn: conn} do
       conn = get(conn, "/thermo")
@@ -130,7 +129,11 @@ defmodule AssetImportTest do
     File.cwd!()
     |> Path.join("assets")
     |> Path.join(name)
-    |> Path.relative_to(Application.get_env(:asset_import, :assets_path))
+    |> Path.relative_to(
+      :asset_import
+      |> Application.get_env(AssetImportTest.Assets)
+      |> Keyword.get(:assets_path)
+    )
     |> case do
       file = "/" <> _ ->
         file

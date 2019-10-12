@@ -16,7 +16,7 @@ The package can be installed by adding `asset_import` to your list of dependenci
 ```elixir
 def deps do
   [
-    {:asset_import, "~> 0.2.3"}
+    {:asset_import, "~> 0.3.0"}
   ]
 end
 ```
@@ -65,7 +65,7 @@ Typical `asset_import` config:
 ```elixir
 # config/config.exs
 
-config :asset_import,
+config :asset_import, MyAppWeb.Assets,
   assets_base_url: "/",
   assets_path: Path.expand("assets"),
   manifest_path: Path.expand("priv/static/manifest.json"),
@@ -206,7 +206,7 @@ Copy `example_assets/*` to your project assets or adjust existing files manually
     ..
     "dependencies": {
       ..
-      "asset_import_hook": "0.2.3" // only when LiveView is used
+      "asset_import_hook": "0.3.0" // only when LiveView is used
       ..
     },
     "devDependencies": {

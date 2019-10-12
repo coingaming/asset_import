@@ -1,6 +1,6 @@
 import Config
 
-config :asset_import,
+config :asset_import, AssetImportTest.Assets,
   assets_base_url: "/assets",
   assets_path: Path.expand("assets"),
   manifest_path: Path.expand("priv/static/manifest.json"),

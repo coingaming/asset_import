@@ -5,15 +5,16 @@ defmodule AssetImport do
 
   defmacro __using__(opts) do
     assets_path = Keyword.get(opts, :assets_path, "assets")
+    module = __CALLER__.module
 
     quote do
       defmodule Files do
-        @manifest AssetImport.read_manifest() |> Jason.decode!()
+        @manifest AssetImport.read_manifest(unquote(module)) |> Jason.decode!()
 
         defmacro unused_asset_script_files do
           manifest =
             @manifest
-            |> AssetImport.manifest_assets_by_extension(".js")
+            |> AssetImport.manifest_assets_by_extension(unquote(module), ".js")
             |> Macro.escape()
 
           quote do
@@ -24,7 +25,7 @@ defmodule AssetImport do
         defmacro unused_asset_style_files do
           manifest =
             @manifest
-            |> AssetImport.manifest_assets_by_extension(".css")
+            |> AssetImport.manifest_assets_by_extension(unquote(module), ".css")
             |> Macro.escape()
 
           quote do
@@ -35,7 +36,7 @@ defmodule AssetImport do
         defmacro asset_script_files do
           manifest =
             @manifest
-            |> AssetImport.manifest_assets_by_extension(".js")
+            |> AssetImport.manifest_assets_by_extension(unquote(module), ".js")
             |> Macro.escape()
 
           quote do
@@ -46,7 +47,7 @@ defmodule AssetImport do
         defmacro asset_style_files do
           manifest =
             @manifest
-            |> AssetImport.manifest_assets_by_extension(".css")
+            |> AssetImport.manifest_assets_by_extension(unquote(module), ".css")
             |> Macro.escape()
 
           quote do
@@ -71,15 +72,15 @@ defmodule AssetImport do
         end
 
         def __phoenix_recompile__? do
-          unquote(AssetImport.manifest_hash()) != AssetImport.manifest_hash()
+          unquote(AssetImport.manifest_hash(module)) != AssetImport.manifest_hash(unquote(module))
         end
       end
 
-      @manifest AssetImport.read_manifest() |> Jason.decode!()
+      @manifest AssetImport.read_manifest(unquote(module)) |> Jason.decode!()
 
       defmacro __using__(_) do
         Module.put_attribute(__CALLER__.module, :asset_imports, Map.new())
-
+        module = unquote(module)
         quote do
           AssetImport.put_compiling_module(__MODULE__)
 
@@ -87,24 +88,34 @@ defmodule AssetImport do
           import unquote(__MODULE__).Files, except: [__phoenix_recompile__?: 0]
 
           @before_compile AssetImport
-          @after_compile AssetImport
+          @after_compile unquote(module)
         end
       end
 
       defmacro asset_import(name) do
-        asset_hash = AssetImport.register_import(__CALLER__, unquote(assets_path), name)
+        asset_hash = AssetImport.register_import(__CALLER__, unquote(module), unquote(assets_path), name)
 
         files =
           @manifest
-          |> AssetImport.manifest_assets_by_hash(asset_hash)
+          |> AssetImport.manifest_assets_by_hash(unquote(module), asset_hash)
 
         quote do
           AssetImport.asset_import(unquote(asset_hash), unquote(files))
         end
       end
 
+      def __after_compile__(_env, _bytecode) do
+        case AssetImport.registered_imports() do
+          {:ok, imports} ->
+            AssetImport.write_entrypoints(unquote(module), imports)
+
+          error ->
+            error
+        end
+      end
+
       def __phoenix_recompile__? do
-        unquote(AssetImport.manifest_hash()) != AssetImport.manifest_hash()
+        unquote(AssetImport.manifest_hash(module)) != AssetImport.manifest_hash(unquote(module))
       end
     end
   end
@@ -119,18 +130,10 @@ defmodule AssetImport do
   end
 
   @doc false
-  def __after_compile__(_env, _bytecode) do
-    case registered_imports() do
-      {:ok, imports} ->
-        write_entrypoints(imports)
-      error ->
-        error
-    end
-  end
-
-  defp write_entrypoints(imports) do
+  def write_entrypoints(module, imports) do
     content = Jason.encode!(imports, pretty: true)
-    case config(:entrypoints_path) do
+
+    case config(module, :entrypoints_path) do
       :disabled ->
         :ok
 
@@ -170,8 +173,8 @@ defmodule AssetImport do
   end
 
   @doc false
-  def register_import(caller, assets_path, name) do
-    module = caller.module
+  def register_import(caller, module, assets_path, name) do
+    caller_module = caller.module
 
     abs_path =
       File.cwd!()
@@ -188,7 +191,7 @@ defmodule AssetImport do
 
     rel_path =
       abs_path
-      |> Path.relative_to(config(:assets_path))
+      |> Path.relative_to(config(module, :assets_path))
       |> case do
         file = "/" <> _ ->
           file
@@ -197,10 +200,10 @@ defmodule AssetImport do
           Path.join(".", file)
       end
 
-    current_asset_imports = Module.get_attribute(module, :asset_imports) || Map.new()
+    current_asset_imports = Module.get_attribute(caller_module, :asset_imports) || Map.new()
     asset_hash = hash(rel_path)
     new_imports = Map.put(current_asset_imports, asset_hash, rel_path)
-    Module.put_attribute(module, :asset_imports, new_imports)
+    Module.put_attribute(caller_module, :asset_imports, new_imports)
     asset_hash
   end
 
@@ -208,8 +211,10 @@ defmodule AssetImport do
   def registered_imports() do
     case get_modules() do
       {:ok, modules} ->
-        {:ok, modules
-        |> Enum.reduce(Map.new(), &Map.merge(&2, &1.__asset_imports__()))}
+        {:ok,
+         modules
+         |> Enum.reduce(Map.new(), &Map.merge(&2, &1.__asset_imports__()))}
+
       error ->
         error
     end
@@ -283,9 +288,12 @@ defmodule AssetImport do
       |> MapSet.to_list()
 
     if Enum.all?(compiling_modules, &Code.ensure_loaded?/1) do
-      {:ok, (compiling_modules ++ get_compiled_modules())
-      |> Enum.filter(&(Code.ensure_loaded?(&1) and function_exported?(&1, :__asset_imports__, 0)))
-      |> MapSet.new()}
+      {:ok,
+       (compiling_modules ++ get_compiled_modules())
+       |> Enum.filter(
+         &(Code.ensure_loaded?(&1) and function_exported?(&1, :__asset_imports__, 0))
+       )
+       |> MapSet.new()}
     else
       {:error, :still_compiling}
     end
@@ -319,14 +327,15 @@ defmodule AssetImport do
   end
 
   @doc false
-  def manifest_hash do
-    read_manifest()
+  def manifest_hash(module) do
+    module
+    |> read_manifest()
     |> :erlang.md5()
   end
 
   @doc false
-  def read_manifest do
-    manifest_file = config(:manifest_path)
+  def read_manifest(module) do
+    manifest_file = config(module, :manifest_path)
 
     manifest_file
     |> File.read()
@@ -341,8 +350,8 @@ defmodule AssetImport do
   end
 
   @doc false
-  def manifest_assets_by_extension(manifest, extension) do
-    base_url = config(:assets_base_url)
+  def manifest_assets_by_extension(manifest, module, extension) do
+    base_url = config(module, :assets_base_url)
 
     manifest
     |> Enum.filter(fn {_, file} ->
@@ -359,8 +368,8 @@ defmodule AssetImport do
   end
 
   @doc false
-  def manifest_assets_by_hash(manifest, asset_hash) do
-    base_url = config(:assets_base_url)
+  def manifest_assets_by_hash(manifest, module, asset_hash) do
+    base_url = config(module, :assets_base_url)
 
     manifest
     |> Enum.reduce([], fn {key, file}, acc ->
@@ -390,15 +399,15 @@ defmodule AssetImport do
     end
   end
 
-  defp config(field) do
-    case Application.get_env(:asset_import, field) do
+  defp config(module, field) do
+    case Application.get_env(:asset_import, module) do
       nil ->
         """
-        Missing `:asset_import` config field `#{inspect(field)}`.
+        Missing `:asset_import` config for `#{inspect(module)}`.
 
         Example config:
 
-            config :asset_import,
+            config :asset_import, #{inspect(module)},
               assets_base_url: "/",
               assets_path: Path.expand("assets"),
               manifest_path: Path.expand("priv/static/manifest.json"),
@@ -409,7 +418,24 @@ defmodule AssetImport do
         raise CompileError.exception(description: "Missing config field #{inspect(field)}")
 
       value ->
-        value
+        case Keyword.get(value, field) do
+          nil ->
+            """
+            Missing `:asset_import` config field `#{inspect(field)}``.
+
+            Example config:
+
+                config :asset_import, #{inspect(module)},
+                  assets_base_url: "/",
+                  assets_path: Path.expand("assets"),
+                  manifest_path: Path.expand("priv/static/manifest.json"),
+                  entrypoints_path: Path.expand("assets/entrypoints.json")
+            """
+            |> IO.ANSI.Docs.print()
+
+          value ->
+            value
+        end
     end
   end
 end

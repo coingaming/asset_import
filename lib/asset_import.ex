@@ -81,6 +81,7 @@ defmodule AssetImport do
       defmacro __using__(_) do
         Module.put_attribute(__CALLER__.module, :asset_imports, Map.new())
         module = unquote(module)
+
         quote do
           AssetImport.put_compiling_module(__MODULE__)
 
@@ -93,7 +94,8 @@ defmodule AssetImport do
       end
 
       defmacro asset_import(name) do
-        asset_hash = AssetImport.register_import(__CALLER__, unquote(module), unquote(assets_path), name)
+        asset_hash =
+          AssetImport.register_import(__CALLER__, unquote(module), unquote(assets_path), name)
 
         files =
           @manifest
@@ -105,7 +107,7 @@ defmodule AssetImport do
       end
 
       def __after_compile__(_env, _bytecode) do
-        case AssetImport.registered_imports() do
+        case AssetImport.registered_imports(unquote(module)) do
           {:ok, imports} ->
             AssetImport.write_entrypoints(unquote(module), imports)
 
@@ -200,20 +202,25 @@ defmodule AssetImport do
           Path.join(".", file)
       end
 
-    current_asset_imports = Module.get_attribute(caller_module, :asset_imports) || Map.new()
+    current_modules = Module.get_attribute(caller_module, :asset_imports) || Map.new()
+    current_imports = Map.get(current_modules, module, Map.new())
     asset_hash = hash(rel_path)
-    new_imports = Map.put(current_asset_imports, asset_hash, rel_path)
-    Module.put_attribute(caller_module, :asset_imports, new_imports)
+    new_imports = Map.put(current_imports, asset_hash, rel_path)
+    new_modules = Map.put(current_modules, module, new_imports)
+    Module.put_attribute(caller_module, :asset_imports, new_modules)
     asset_hash
   end
 
   @doc false
-  def registered_imports() do
+  def registered_imports(module) do
     case get_modules() do
       {:ok, modules} ->
         {:ok,
          modules
-         |> Enum.reduce(Map.new(), &Map.merge(&2, &1.__asset_imports__()))}
+         |> Enum.reduce(
+           Map.new(),
+           &Map.merge(&2, Map.get(&1.__asset_imports__(), module, Map.new()))
+         )}
 
       error ->
         error

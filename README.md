@@ -16,7 +16,7 @@ The package can be installed by adding `asset_import` to your list of dependenci
 ```elixir
 def deps do
   [
-    {:asset_import, "~> 0.3.0"}
+    {:asset_import, "~> 0.4.0"}
   ]
 end
 ```
@@ -46,10 +46,14 @@ Anywhere in your views, templates, or LiveView renders:
     <div>My profile..</div>
   <% else %>
     <!--
-    You can use <% asset_import "js/login_form" %> (without =),
+    You can use <% asset_import @conn, "js/login_form" %> (without =),
     if you are not using this template in LiveView. It will save some bytes from your html.
     -->
-    <%= asset_import "js/login_form" %>
+    <%= asset_import @conn, "js/login_form" %>
+    <!--
+    Inside LiveView use @socket instead @conn
+    -->
+    <%= asset_import @socket, "js/login_form" %>
     <form>Login form..</form>
   <% end %>
 </div>
@@ -96,6 +100,7 @@ config :asset_import, entrypoints_path: :disabled
 defmodule MyAppWeb.Assets do
   use AssetImport,
     assets_path: "assets" # optional, defaults to "assets"
+  use AwesomeUiComponents.Assets # add dependency assets
 end
 ```
 
@@ -115,7 +120,16 @@ defmodule MyAppWeb do
 end
 ```
 
-### 4. Add scripts and styles to layout
+### 4. Import file macros to your layout view
+
+```elixir
+defmodule MyAppWeb.LayoutView do
+  use MyAppWeb, :view
+  import MyAppWeb.Assets.Files
+end
+```
+
+### 5. Add scripts and styles to layout
 
 ```html
 <!-- Content rendering has to execute before scripts and styles -->
@@ -177,7 +191,7 @@ Or
 </html>
 ```
 
-### 5. Add LiveView hook (only when LiveView is used)
+### 6. Add LiveView hook (only when LiveView is used)
 
 ```javascript
 import LiveSocket from "phoenix_live_view"
@@ -188,7 +202,7 @@ let liveSocket = new LiveSocket("/live", Socket, { AssetImport })
 liveSocket.connect()
 ```
 
-### 6. Webpack setup
+### 7. Webpack setup
 
 Copy `example_assets/*` to your project assets or adjust existing files manually:
 
@@ -206,7 +220,7 @@ Copy `example_assets/*` to your project assets or adjust existing files manually
     ..
     "dependencies": {
       ..
-      "asset_import_hook": "0.3.0" // only when LiveView is used
+      "asset_import_hook": "0.4.0" // only when LiveView is used
       ..
     },
     "devDependencies": {

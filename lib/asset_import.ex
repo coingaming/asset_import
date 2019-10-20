@@ -218,14 +218,12 @@ defmodule AssetImport do
       else
         []
       end
-      |> IO.inspect(label: "WRITE DEPS #{inspect(module)}")
 
     app_deps = deps |> Enum.map(fn {app, _} -> app end)
     module_deps = deps |> Enum.map(fn {_, mod} -> mod end)
 
     case registered_imports(app_deps) do
       {:ok, imports} ->
-        IO.inspect(imports, label: "IMPORTS #{inspect(module)}")
 
         content =
           imports
@@ -235,7 +233,7 @@ defmodule AssetImport do
 
             {hash, {asset_module, file}}, acc ->
               if asset_module in module_deps do
-                [{hash, relative_path(file, assets_path)} |> IO.inspect() | acc]
+                [{hash, relative_path(file, assets_path)} | acc]
               else
                 acc
               end
@@ -414,7 +412,6 @@ defmodule AssetImport do
 
   @doc false
   defp hash(value) do
-    IO.inspect(value)
     :crypto.hash(:sha256, value)
     |> Base.encode64(padding: false)
     |> String.replace(~r/[^a-zA-Z0-9]+/, "")

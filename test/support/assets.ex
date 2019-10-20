@@ -1,3 +1,3 @@
 defmodule AssetImportTest.Assets do
-  use AssetImport
+  use AssetImport, otp_app: :asset_import
 end

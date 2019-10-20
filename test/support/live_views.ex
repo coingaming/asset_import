@@ -6,7 +6,7 @@ defmodule AssetImportTest.ThermostatLive do
 
   def render(assigns) do
     ~L"""
-    <% asset_import "thermostat" %>
+    <% asset_import @socket, "thermostat" %>
     The temp is: <%= @val %><%= @greeting %>
     <button phx-click="dec">-</button>
     <button phx-click="inc">+</button><%= if @nest do %>
@@ -86,7 +86,7 @@ defmodule AssetImportTest.ClockLive do
 
   def render(assigns) do
     ~L"""
-    <% asset_import "thermostat/clock" %>
+    <% asset_import @socket, "thermostat/clock" %>
     time: <%= @time %> <%= @name %>
     <%= live_render(@socket, ClockControlsLive, id: :"#{String.replace(@name, " ", "-")}-controls") %>
     """
@@ -115,14 +115,14 @@ defmodule AssetImportTest.ClockControlsLive do
 
   def render(assigns = %{connected: false}) do
     ~L"""
-    <% asset_import "thermostat/clock/static_controls" %>
+    <% asset_import @socket, "thermostat/clock/static_controls" %>
     <button phx-click="snooze">+</button>
     """
   end
 
   def render(assigns = %{connected: true}) do
     ~L"""
-    <% asset_import "thermostat/clock/live_controls" %>
+    <% asset_import @socket, "thermostat/clock/live_controls" %>
     <button phx-click="snooze">+</button>
     """
   end

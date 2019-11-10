@@ -1,7 +1,7 @@
 defmodule AssetImport.MixProject do
   use Mix.Project
 
-  @version "0.4.0"
+  @version "0.4.1"
 
   def project do
     [
@@ -36,7 +36,7 @@ defmodule AssetImport.MixProject do
       {:jason, "~> 1.1"},
       {:phoenix, "~> 1.4", only: :test},
       {:phoenix_html, "~> 2.13"},
-      {:phoenix_live_view, "~> 0.3", only: :test},
+      {:phoenix_live_view, "~> 0.4", only: :test},
       {:mix_test_watch, "~> 0.5", only: :dev, runtime: false},
       {:ex_unit_notifier, "~> 0.1", only: :test},
       {:floki, "~> 0.23.0", only: :test},

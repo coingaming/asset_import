@@ -372,7 +372,7 @@ defmodule AssetImport do
           nil
 
         files ->
-          ~s|<div style="display: none" phx-hook="AssetImport" data-asset-files="#{files}"></div>|
+          ~s|<div id="ai_#{asset_hash}" style="display: none" phx-hook="AssetImport" data-asset-files="#{files}"></div>|
           |> Phoenix.HTML.raw()
       end
     end

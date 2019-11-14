@@ -362,7 +362,7 @@ defmodule AssetImport do
           nil
 
         files ->
-          ~s|<div id="ai_#{asset_hash}" style="display: none" phx-hook="AssetImport" data-css-files="#{files |> Enum.join(" ")}"></div>|
+          ~s|<div id="ai_#{asset_hash}" style="display: none" phx-hook="AssetImport" data-asset-files="#{files |> Enum.join(" ")}"></div>|
           |> Phoenix.HTML.raw()
       end
     end

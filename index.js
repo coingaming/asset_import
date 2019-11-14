@@ -7,7 +7,7 @@ export default {
 
     assetFiles.split(" ").forEach(fileName => {
       if (fileName.substr(-4) === '.css') {
-        if (headEl.querySelectorAll(`link[href="${fileName}"]`).length) {
+        if (headEl.querySelectorAll(`link[rel="stylesheet"][href="${fileName}"]`).length) {
           return;
         }
         const el = document.createElement("link");

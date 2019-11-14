@@ -88,6 +88,10 @@ defmodule AssetImport do
                 @js_assets
               end
 
+              def css_assets do
+                @css_assets
+              end
+
               def __phoenix_recompile__? do
                 unquote(AssetImport.manifest_hash(manifest_file)) !=
                   AssetImport.manifest_hash(unquote(manifest_file))
@@ -351,30 +355,30 @@ defmodule AssetImport do
       end
 
     if !is_nil(files_module) do
-      imports = files_module.js_assets()
-
-      files =
-        imports
-        |> Map.get(asset_hash)
-        |> case do
-          nil ->
-            nil
-
-          files ->
-            files
-            |> MapSet.to_list()
-            |> Enum.sort()
-            |> Enum.join(" ")
-        end
+      files = imports_files(files_module.js_assets(), asset_hash) ++ imports_files(files_module.css_assets(), asset_hash)
 
       case files do
-        "" ->
+        [] ->
           nil
 
         files ->
-          ~s|<div id="ai_#{asset_hash}" style="display: none" phx-hook="AssetImport" data-asset-files="#{files}"></div>|
+          ~s|<div id="ai_#{asset_hash}" style="display: none" phx-hook="AssetImport" data-css-files="#{files |> Enum.join(" ")}"></div>|
           |> Phoenix.HTML.raw()
       end
+    end
+  end
+
+  defp imports_files(imports, asset_hash) do
+    imports
+    |> Map.get(asset_hash)
+    |> case do
+      nil ->
+        []
+
+      files ->
+        files
+        |> MapSet.to_list()
+        |> Enum.sort()
     end
   end
 

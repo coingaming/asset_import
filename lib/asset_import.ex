@@ -328,7 +328,7 @@ defmodule AssetImport do
   end
 
   @doc false
-  def asset_import(socket_or_conn, asset_hash) do
+  def asset_files(socket_or_conn, asset_hash) do
     current_imports = Process.get(:asset_imports, MapSet.new())
     Process.put(:asset_imports, MapSet.put(current_imports, asset_hash))
 
@@ -354,18 +354,30 @@ defmodule AssetImport do
           files_module
       end
 
-    if !is_nil(files_module) do
-      files = imports_files(files_module.js_assets(), asset_hash) ++ imports_files(files_module.css_assets(), asset_hash)
-
-      case files do
-        [] ->
-          nil
-
-        files ->
-          ~s|<div id="ai_#{asset_hash}" style="display: none" phx-hook="AssetImport" data-asset-files="#{files |> Enum.join(" ")}"></div>|
-          |> Phoenix.HTML.raw()
-      end
+    if is_nil(files_module) do
+      []
+    else
+      imports_files(files_module.js_assets(), asset_hash) ++ imports_files(files_module.css_assets(), asset_hash)
     end
+  end
+
+  @doc false
+  def asset_import(socket_or_conn, asset_hash) do
+    case asset_files(socket_or_conn, asset_hash) do
+      [] ->
+        nil
+
+      files ->
+        ~s|<div id="ai_#{asset_hash}" style="display: none" phx-hook="AssetImport" data-asset-files="#{files |> Enum.join(" ")}"></div>|
+        |> Phoenix.HTML.raw()
+    end
+  end
+
+  @doc false
+  def asset_hook(socket_or_conn, asset_hash) do
+    socket_or_conn
+    |> asset_files(asset_hash)
+    |> Enum.join(" ")
   end
 
   defp imports_files(imports, asset_hash) do

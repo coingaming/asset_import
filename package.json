@@ -1,6 +1,6 @@
 {
   "name": "asset_import_hook",
-  "version": "0.4.4",
+  "version": "0.4.5",
   "description": "AssetImport Phoenix LiveView hook for dynamic asset loading",
   "main": "index.js",
   "files": [

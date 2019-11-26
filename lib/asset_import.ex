@@ -192,6 +192,16 @@ defmodule AssetImport do
             AssetImport.asset_import(unquote(socket_or_conn), unquote(asset_hash))
           end
         end
+
+        defmacro asset_hook(socket_or_conn, name) do
+          module = unquote(module)
+          assets_path = unquote(assets_path)
+          asset_hash = AssetImport.register_import(__CALLER__, module, assets_path, name)
+
+          quote do
+            AssetImport.asset_hook(unquote(socket_or_conn), unquote(asset_hash))
+          end
+        end
       end
 
     [files_module_ast, using_ast, asset_import_ast, after_compile_ast]

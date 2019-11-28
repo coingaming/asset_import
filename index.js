@@ -58,8 +58,10 @@ const AssetHook = {
       const index = this.el.loadingAssets.indexOf(fileName);
       if (index !== -1) {
         this.el.loadingAssets.splice(index, 1);
-        if (!this.el.loadingAssets.length && onloadCallbacks[hook]) {
-          onloadCallbacks[hook].forEach(x => x())
+        if (!this.el.loadingAssets.length) {
+          if (onloadCallbacks[hook]) {
+            onloadCallbacks[hook].forEach(x => x());
+          }
           onloadCallbacks[hook] = null;
         }
       }

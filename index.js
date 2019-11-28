@@ -29,6 +29,20 @@ const AssetImport = {
 
 };
 
+const onloadCallbacks = {};
+
+const addOnloadCallback = (hook, callback) => {
+  if (onloadCallbacks[hook] === null) {
+    callback();
+  }
+  else {
+    if (!onloadCallbacks[hook]) {
+      onloadCallbacks[hook] = [];
+    }
+    onloadCallbacks[hook].push(callback);
+  }
+}
+
 const AssetHook = {
 
   mounted() {
@@ -44,11 +58,9 @@ const AssetHook = {
       const index = this.el.loadingAssets.indexOf(fileName);
       if (index !== -1) {
         this.el.loadingAssets.splice(index, 1);
-        if (!this.el.loadingAssets.length) {
-          const hookFunc = this.__view.liveSocket.hooks[hook].mounted
-          if (hookFunc) {
-            hookFunc.apply(this);
-          }
+        if (!this.el.loadingAssets.length && onloadCallbacks[hook]) {
+          onloadCallbacks[hook].forEach(x => x())
+          onloadCallbacks[hook] = null;
         }
       }
     };
@@ -77,22 +89,33 @@ const AssetHook = {
         bodyEl.appendChild(el);
       }
     });
+
+    addOnloadCallback(hook, () => {
+      const targetHook = this.__view.liveSocket.hooks[hook]
+      if (targetHook && targetHook.mounted) {
+        targetHook.mounted.apply(this);
+      }
+    });
   },
 
   updated() {
     const { hook } = this.el.dataset;
-    const hookFunc = this.__view.liveSocket.hooks[hook].updated
-    if (hookFunc) {
-      hookFunc.apply(this);
-    }
+    addOnloadCallback(hook, () => {
+      const targetHook = this.__view.liveSocket.hooks[hook]
+      if (targetHook && targetHook.updated) {
+        targetHook.updated.apply(this);
+      }
+    });
   },
 
   destroyed() {
     const { hook } = this.el.dataset;
-    const hookFunc = this.__view.liveSocket.hooks[hook].destroyed
-    if (hookFunc) {
-      hookFunc.apply(this);
-    }
+    addOnloadCallback(hook, () => {
+      const targetHook = this.__view.liveSocket.hooks[hook]
+      if (targetHook && targetHook.destroyed) {
+        targetHook.destroyed.apply(this);
+      }
+    });
   }
 
 };

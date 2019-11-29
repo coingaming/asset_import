@@ -1,10 +1,8 @@
 const AssetImport = {
-
   mounted() {
     const { assetFiles } = this.el.dataset;
     const headEl = document.getElementsByTagName("head")[0];
     const bodyEl = document.getElementsByTagName("body")[0];
-
     assetFiles.split(" ").forEach(fileName => {
       if (fileName.substr(-4) === '.css') {
         if (headEl.querySelectorAll(`link[rel="stylesheet"][href="${fileName}"]`).length) {
@@ -26,11 +24,20 @@ const AssetImport = {
       }
     });
   }
-
 };
 
-const onloadCallbacks = {};
+function ready(callback){
+  // in case the document is already rendered
+  if (document.readyState!='loading') callback();
+  // modern browsers
+  else if (document.addEventListener) document.addEventListener('DOMContentLoaded', callback);
+  // IE <= 8
+  else document.attachEvent('onreadystatechange', function(){
+      if (document.readyState=='complete') callback();
+  });
+}
 
+const onloadCallbacks = {};
 const addOnloadCallback = (hook, callback) => {
   if (onloadCallbacks[hook] === null) {
     callback();
@@ -44,16 +51,13 @@ const addOnloadCallback = (hook, callback) => {
 }
 
 const AssetHook = {
-
   mounted() {
     const { assets, hook } = this.el.dataset;
     const headEl = document.getElementsByTagName("head")[0];
     const bodyEl = document.getElementsByTagName("body")[0];
-
     const assetFiles = assets.split(" ");
-
     this.el.loadingAssets = assetFiles.slice(0);
-
+    
     const onload = (fileName) => {
       const index = this.el.loadingAssets.indexOf(fileName);
       if (index !== -1) {
@@ -69,8 +73,13 @@ const AssetHook = {
 
     assetFiles.forEach(fileName => {
       if (fileName.substr(-4) === '.css') {
-        if (headEl.querySelectorAll(`link[rel="stylesheet"][href="${fileName}"]`).length) {
-          onload(fileName);
+        const existingEl = headEl.querySelectorAll(`link[rel="stylesheet"][href="${fileName}"]`)[0];
+        if (existingEl) {
+          if (!existingEl.onload) {
+            ready(() => {
+              onload(fileName);
+            });
+          }
           return;
         }
         const el = document.createElement("link");
@@ -81,8 +90,13 @@ const AssetHook = {
         headEl.appendChild(el)
       }
       else if (fileName.substr(-3) === '.js') {
-        if (document.querySelectorAll(`script[src="${fileName}"]`).length) {
-          onload(fileName);
+        const existingEl = document.querySelectorAll(`script[src="${fileName}"]`)[0]
+        if (existingEl) {
+          if (!existingEl.onload) {
+            ready(() => {
+              onload(fileName)
+            });
+          }
           return;
         }
         const el = document.createElement('script');;
@@ -91,7 +105,6 @@ const AssetHook = {
         bodyEl.appendChild(el);
       }
     });
-
     addOnloadCallback(hook, () => {
       const targetHook = this.__view.liveSocket.hooks[hook]
       if (targetHook && targetHook.mounted) {
@@ -119,7 +132,6 @@ const AssetHook = {
       }
     });
   }
-
 };
 
 export {AssetImport, AssetHook};

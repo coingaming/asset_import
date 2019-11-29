@@ -16,7 +16,7 @@ The package can be installed by adding `asset_import` to your list of dependenci
 ```elixir
 def deps do
   [
-    {:asset_import, "~> 0.4.7"}
+    {:asset_import, "~> 0.4.8"}
   ]
 end
 ```

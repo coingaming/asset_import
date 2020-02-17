@@ -233,7 +233,7 @@ Copy `example_assets/*` to your project assets or adjust existing files manually
     ..
     "dependencies": {
       ..
-      "asset_import_hook": "0.4.7" // only when LiveView is used
+      "asset_import_hook": "0.4.9" // only when LiveView is used
       ..
     },
     "devDependencies": {

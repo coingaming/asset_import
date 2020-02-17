@@ -59,6 +59,19 @@ Anywhere in your views, templates, or LiveView renders:
 </div>
 ```
 
+Usage with LiveView hooks that guarantees that code is always loaded before hook usage:
+```html
+<div>
+  <%= if @logged_in do %>
+    <div>My profile..</div>
+  <% else %>
+    <form data-hook="MyHook" phx-hook="AssetHook" data-assets="<%= asset_hook(@socket, "js/myHook") %>">
+      Login form..
+    </form>
+  <% end %>
+</div>
+```
+
 Assets `js/login_form.js` and `css/forms.css` are only loaded when user is not logged in.
 
 ## Setup

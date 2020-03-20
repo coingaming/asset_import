@@ -1,7 +1,7 @@
 defmodule AssetImport.MixProject do
   use Mix.Project
 
-  @version "0.4.9"
+  @version "0.4.10"
 
   def project do
     [
@@ -40,7 +40,7 @@ defmodule AssetImport.MixProject do
       {:mix_test_watch, "~> 0.5", only: :dev, runtime: false},
       {:ex_unit_notifier, "~> 0.1", only: :test},
       {:floki, "~> 0.23.0", only: :test},
-      {:ex_doc, "~> 0.21", only: :dev, runtime: false},
+      {:ex_doc, "~> 0.21", only: :dev, runtime: false}
     ]
   end
 

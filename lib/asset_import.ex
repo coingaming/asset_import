@@ -238,7 +238,6 @@ defmodule AssetImport do
 
     case registered_imports(app_deps) do
       {:ok, imports} ->
-
         content =
           imports
           |> Enum.reduce([], fn
@@ -350,6 +349,7 @@ defmodule AssetImport do
             |> case do
               %{endpoint: endpoint} ->
                 endpoint
+
               %{private: %{phoenix_endpoint: endpoint}} ->
                 endpoint
             end
@@ -367,7 +367,8 @@ defmodule AssetImport do
     if is_nil(files_module) do
       []
     else
-      imports_files(files_module.js_assets(), asset_hash) ++ imports_files(files_module.css_assets(), asset_hash)
+      imports_files(files_module.js_assets(), asset_hash) ++
+        imports_files(files_module.css_assets(), asset_hash)
     end
   end
 
@@ -378,7 +379,9 @@ defmodule AssetImport do
         nil
 
       files ->
-        ~s|<div id="ai_#{asset_hash}" style="display: none" phx-hook="AssetImport" data-asset-files="#{files |> Enum.join(" ")}"></div>|
+        ~s'<div id="ai_#{asset_hash}" style="display: none" phx-hook="AssetImport" data-asset-files="#{
+          files |> Enum.join(" ")
+        }"></div>'
         |> Phoenix.HTML.raw()
     end
   end
@@ -401,6 +404,8 @@ defmodule AssetImport do
         files
         |> MapSet.to_list()
         |> Enum.sort()
+        |> Enum.sort(fn {nr1, _}, {nr2, _} -> nr1 < nr2 end)
+        |> Enum.map(fn {_, file} -> file end)
     end
   end
 
@@ -415,7 +420,8 @@ defmodule AssetImport do
     |> MapSet.put("runtime")
     |> Enum.reduce(MapSet.new(), &MapSet.union(&2, Map.get(assets, &1, MapSet.new())))
     |> MapSet.to_list()
-    |> Enum.sort()
+    |> Enum.sort(fn {nr1, _}, {nr2, _} -> nr1 < nr2 end)
+    |> Enum.map(fn {_, file} -> file end)
   end
 
   @doc false
@@ -433,7 +439,8 @@ defmodule AssetImport do
     all_files
     |> MapSet.difference(used_files)
     |> MapSet.to_list()
-    |> Enum.sort()
+    |> Enum.sort(fn {nr1, _}, {nr2, _} -> nr1 < nr2 end)
+    |> Enum.map(fn {_, file} -> file end)
   end
 
   @doc false
@@ -523,14 +530,23 @@ defmodule AssetImport do
       Path.extname(output_file) == extension
     end)
     |> Enum.map(fn {input_file, output_file} ->
-      {input_file, Path.join(base_url, output_file)}
+      nr =
+        with [nr_str, _] <- String.split(output_file, "-"),
+             {nr, ""} <- Integer.parse(nr_str) do
+          nr
+        else
+          _ ->
+            0
+        end
+
+      {input_file, {nr, Path.join(base_url, output_file)}}
     end)
-    |> Enum.reduce(%{}, fn {input_file, output_file}, acc ->
+    |> Enum.reduce(%{}, fn {input_file, output}, acc ->
       input_file
       |> Path.basename(extension)
       |> String.split("~")
       |> Enum.reduce(acc, fn hash, acc ->
-        Map.put(acc, hash, MapSet.put(Map.get(acc, hash, MapSet.new()), output_file))
+        Map.put(acc, hash, MapSet.put(Map.get(acc, hash, MapSet.new()), output))
       end)
     end)
     |> Enum.into(%{})
